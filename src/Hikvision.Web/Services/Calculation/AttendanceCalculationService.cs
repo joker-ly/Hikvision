@@ -27,12 +27,29 @@ public class AttendanceCalculationService : IAttendanceCalculationService
             .AsNoTracking()
             .ToListAsync(ct);
 
-        return Calculate(employee.Group!, employee.Group!.Schedule, records, from, to);
+        var holidays = await LoadHolidaysAsync(from, to, ct);
+
+        return Calculate(employee.Group!, employee.Group!.Schedule, records, from, to, holidays);
+    }
+
+    /// <summary>تحميل كل تواريخ الإجازات الرسمية ضمن المدى كمجموعة تواريخ مفردة.</summary>
+    public async Task<ISet<DateOnly>> LoadHolidaysAsync(DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        var holidays = await _db.Holidays
+            .Where(h => h.StartDate <= to && h.EndDate >= from)
+            .AsNoTracking().ToListAsync(ct);
+
+        var set = new HashSet<DateOnly>();
+        foreach (var h in holidays)
+            for (var d = h.StartDate; d <= h.EndDate; d = d.AddDays(1))
+                if (d >= from && d <= to) set.Add(d);
+        return set;
     }
 
     public List<DailyAttendanceResult> Calculate(
         EmployeeGroup group, WorkSchedule? schedule,
-        IReadOnlyCollection<AttendanceRecord> records, DateOnly from, DateOnly to)
+        IReadOnlyCollection<AttendanceRecord> records, DateOnly from, DateOnly to,
+        ISet<DateOnly> holidays)
     {
         var results = new List<DailyAttendanceResult>();
         var byDay = records.GroupBy(r => DateOnly.FromDateTime(r.EventTime))
@@ -47,45 +64,69 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                 IsWorkingDay = schedule?.IsWorkingDay(day.DayOfWeek) ?? true
             };
 
-            // 1) السجلات اليدوية لها الأولوية في تحديد حالة اليوم
+            // 1) الإجازات الرسمية المعمّمة: حضور للجميع
+            if (holidays.Contains(day))
+            {
+                res.IsHoliday = true;
+                res.IsPresent = true;
+                results.Add(res);
+                continue;
+            }
+
+            // 2) السجلات اليدوية
             var manual = dayRecords
                 .Where(r => r.Source == AttendanceSource.Manual && r.ManualType != ManualAttendanceType.None)
-                .OrderBy(r => r.EventTime)
-                .FirstOrDefault();
+                .ToList();
+            var primaryManual = manual.FirstOrDefault(r => r.ManualType != ManualAttendanceType.PermittedExit)
+                                ?? manual.FirstOrDefault();
+            res.HasPermittedExit = manual.Any(r => r.ManualType == ManualAttendanceType.PermittedExit);
 
-            if (manual is not null)
+            if (primaryManual is not null && primaryManual.ManualType != ManualAttendanceType.PermittedExit)
             {
-                res.ManualTypeApplied = manual.ManualType;
-                res.Note = manual.Note;
-                ApplyManualType(res, manual.ManualType);
-                // ما زلنا نحسب أوقات/ساعات البصمات إن وُجدت
+                res.ManualTypeApplied = primaryManual.ManualType;
+                res.Note = primaryManual.Note;
+            }
+            else if (res.HasPermittedExit)
+            {
+                res.ManualTypeApplied = ManualAttendanceType.PermittedExit;
+                res.Note = manual.First(r => r.ManualType == ManualAttendanceType.PermittedExit).Note;
             }
 
             var deviceRecords = dayRecords
                 .Where(r => r.Source == AttendanceSource.Device)
                 .OrderBy(r => r.EventTime)
                 .ToList();
+            // السجلات اليدوية من نوع دخول/خروج (للإجازات/المهام تُولَّد بصمات يدوية)
+            var manualPunches = manual
+                .OrderBy(r => r.EventTime).ToList();
+            var allPunches = deviceRecords.Concat(manualPunches).OrderBy(r => r.EventTime).ToList();
 
-            // 2) منطق الاحتساب حسب نوع المجموعة وطريقتها
+            // 3) أنواع يدوية تُحتسب حضورًا/عذرًا مباشرة
+            if (res.ManualTypeApplied is ManualAttendanceType.Leave
+                or ManualAttendanceType.WorkMission or ManualAttendanceType.TaskDone)
+            {
+                res.IsPresent = true;
+                ComputeHours(res, allPunches);
+                results.Add(res);
+                continue;
+            }
+
+            // 4) منطق الاحتساب حسب نوع المجموعة
             if (!group.IsTimeBound)
             {
-                // المدراء: بصمة دخول واحدة تكفي، لا تأخير ولا ساعات مطلوبة
-                CalculateManagers(res, deviceRecords);
+                CalculateManagers(res, allPunches);
             }
             else if (group.CalculationMode == CalculationMode.ByWorkHours)
             {
-                CalculateByHours(res, deviceRecords, schedule);
+                CalculateByHours(res, allPunches, schedule);
             }
             else
             {
-                CalculateByCheckInOut(res, deviceRecords, schedule);
+                CalculateByCheckInOut(res, allPunches, schedule, res.HasPermittedExit);
             }
 
-            // 3) تحديد الغياب: يوم عمل، لا حضور، ولا عذر يدوي
-            if (res.ManualTypeApplied is ManualAttendanceType.None)
-            {
-                res.IsAbsent = res.IsWorkingDay && !res.IsPresent;
-            }
+            // 5) تحديد الغياب
+            res.IsAbsent = res.IsWorkingDay && !res.IsPresent;
 
             results.Add(res);
         }
@@ -93,82 +134,72 @@ public class AttendanceCalculationService : IAttendanceCalculationService
         return results;
     }
 
-    private static void ApplyManualType(DailyAttendanceResult res, ManualAttendanceType type)
+    private static void ComputeHours(DailyAttendanceResult res, List<AttendanceRecord> punches)
     {
-        switch (type)
-        {
-            case ManualAttendanceType.WorkMission:
-            case ManualAttendanceType.TaskDone:
-            case ManualAttendanceType.PermittedExit:
-                res.IsPresent = true; // محسوب حضورًا
-                res.IsAbsent = false;
-                break;
-            case ManualAttendanceType.Leave:
-                res.IsPresent = false; // غياب بعذر — لا يُحتسب غيابًا غير مبرّر
-                res.IsAbsent = false;
-                break;
-        }
+        if (punches.Count == 0) return;
+        res.FirstIn = punches.First().EventTime;
+        res.LastOut = punches.Last().EventTime;
+        if (res.LastOut > res.FirstIn)
+            res.WorkedHours = (decimal)(res.LastOut.Value - res.FirstIn.Value).TotalHours;
     }
 
-    private static void CalculateManagers(DailyAttendanceResult res, List<AttendanceRecord> device)
+    private static void CalculateManagers(DailyAttendanceResult res, List<AttendanceRecord> punches)
     {
-        var ins = device.Where(r => r.Direction is PunchDirection.CheckIn or PunchDirection.Undefined).ToList();
-        var firstIn = device.OrderBy(r => r.EventTime).FirstOrDefault();
-        var lastOut = device.Where(r => r.Direction == PunchDirection.CheckOut)
-                            .OrderByDescending(r => r.EventTime).FirstOrDefault();
-
-        if (device.Count > 0)
-        {
-            res.IsPresent = true;
-            res.FirstIn = firstIn?.EventTime;
-            res.LastOut = lastOut?.EventTime;
-            if (res.FirstIn.HasValue && res.LastOut.HasValue && res.LastOut > res.FirstIn)
-                res.WorkedHours = (decimal)(res.LastOut.Value - res.FirstIn.Value).TotalHours;
-        }
+        if (punches.Count == 0) return;
+        res.IsPresent = true; // بصمة دخول واحدة تكفي
+        ComputeHours(res, punches);
     }
 
-    private static void CalculateByCheckInOut(DailyAttendanceResult res, List<AttendanceRecord> device, WorkSchedule? schedule)
+    private static void CalculateByCheckInOut(
+        DailyAttendanceResult res, List<AttendanceRecord> punches, WorkSchedule? schedule, bool hasPermittedExit)
     {
-        var firstIn = device.Where(r => r.Direction is PunchDirection.CheckIn or PunchDirection.Undefined)
-                           .OrderBy(r => r.EventTime).FirstOrDefault()
-                       ?? device.OrderBy(r => r.EventTime).FirstOrDefault();
-        var lastOut = device.Where(r => r.Direction == PunchDirection.CheckOut)
-                           .OrderByDescending(r => r.EventTime).FirstOrDefault()
-                       ?? device.OrderByDescending(r => r.EventTime).FirstOrDefault();
+        if (punches.Count == 0) return; // لا حضور => غياب
 
-        if (firstIn is null) return;
-
-        res.IsPresent = true;
+        var firstIn = punches.First();
         res.FirstIn = firstIn.EventTime;
-        res.LastOut = lastOut?.EventTime;
-        if (res.LastOut.HasValue && res.LastOut > res.FirstIn)
+        res.LastOut = punches.Last().EventTime;
+        if (res.LastOut > res.FirstIn)
             res.WorkedHours = (decimal)(res.LastOut.Value - res.FirstIn.Value).TotalHours;
 
-        // التأخير: الدخول بعد وقت البدء + سماح التأخير. الدخول قبل الموعد عادي.
+        // التأخير: الحضور بعد موعد الدخول + السماحية => يُحتسب غيابًا
         if (schedule?.StartTime is { } start)
         {
             var allowed = start.ToTimeSpan().Add(TimeSpan.FromMinutes(schedule.LateGraceMinutes));
-            var actual = res.FirstIn.Value.TimeOfDay;
-            if (actual > allowed)
+            if (res.FirstIn.Value.TimeOfDay > allowed)
             {
                 res.IsLate = true;
-                res.LateMinutes = (int)Math.Round((actual - allowed).TotalMinutes);
+                res.LateMinutes = (int)Math.Round((res.FirstIn.Value.TimeOfDay - allowed).TotalMinutes);
+                res.IsPresent = false; // متأخر = غياب حسب السياسة
+                return;
             }
         }
+
+        // الخروج: أي بصمة من موعد الخروج فما بعده تُعتبر خروجًا نظاميًا
+        if (schedule?.EndTime is { } end)
+        {
+            var hasProperCheckout = punches.Any(p => p.EventTime.TimeOfDay >= end.ToTimeSpan());
+            if (!hasProperCheckout)
+            {
+                res.IsEarlyLeave = true;
+                // المغادرة قبل الموعد = غياب، ما لم يوجد إذن خروج
+                res.IsPresent = hasPermittedExit;
+                return;
+            }
+        }
+
+        res.IsPresent = true;
     }
 
-    private static void CalculateByHours(DailyAttendanceResult res, List<AttendanceRecord> device, WorkSchedule? schedule)
+    private static void CalculateByHours(DailyAttendanceResult res, List<AttendanceRecord> punches, WorkSchedule? schedule)
     {
-        // غير مقيّد بأوقات ثابتة: نجمع فترات العمل بمزاوجة الدخول/الخروج وطرح الاستراحات.
-        var ordered = device.OrderBy(r => r.EventTime).ToList();
-        if (ordered.Count == 0) return;
+        if (punches.Count == 0) return;
 
-        res.FirstIn = ordered.First().EventTime;
-        res.LastOut = ordered.Last().EventTime;
+        res.FirstIn = punches.First().EventTime;
+        res.LastOut = punches.Last().EventTime;
 
         decimal totalHours = 0m;
         DateTime? openIn = null;
-        foreach (var r in ordered)
+        foreach (var r in punches)
         {
             switch (r.Direction)
             {
@@ -185,12 +216,10 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                     break;
             }
         }
-        // إذا لم تُزاوج البصمات، نعتمد الفارق بين أول وآخر بصمة
         if (totalHours == 0m && res.LastOut > res.FirstIn)
             totalHours = (decimal)(res.LastOut!.Value - res.FirstIn!.Value).TotalHours;
 
         res.WorkedHours = totalHours;
-
         var required = schedule?.RequiredDailyHours;
         res.IsPresent = required.HasValue ? totalHours >= required.Value : totalHours > 0m;
     }

@@ -8,7 +8,12 @@ namespace Hikvision.Web.Controllers;
 public class GroupsController : Controller
 {
     private readonly AppDbContext _db;
-    public GroupsController(AppDbContext db) => _db = db;
+    private readonly Hikvision.Web.Services.Audit.IAuditLogger _audit;
+    public GroupsController(AppDbContext db, Hikvision.Web.Services.Audit.IAuditLogger audit)
+    {
+        _db = db;
+        _audit = audit;
+    }
 
     public async Task<IActionResult> Index()
     {
@@ -39,6 +44,7 @@ public class GroupsController : Controller
 
         _db.EmployeeGroups.Add(model);
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("إضافة مجموعة", model.Name);
         TempData["Success"] = "تمت إضافة المجموعة بنجاح.";
         return RedirectToAction(nameof(Index));
     }
@@ -67,6 +73,7 @@ public class GroupsController : Controller
         group.CalculationMode = model.CalculationMode;
 
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("تعديل مجموعة", group.Name);
         TempData["Success"] = "تم تحديث المجموعة.";
         return RedirectToAction(nameof(Index));
     }
@@ -84,6 +91,7 @@ public class GroupsController : Controller
         }
         _db.EmployeeGroups.Remove(group);
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("حذف مجموعة", group.Name);
         TempData["Success"] = "تم حذف المجموعة.";
         return RedirectToAction(nameof(Index));
     }

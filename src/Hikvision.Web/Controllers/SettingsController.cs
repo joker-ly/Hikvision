@@ -1,5 +1,6 @@
 using Hikvision.Web.Data;
 using Hikvision.Web.Models.Entities;
+using Hikvision.Web.Services.Audit;
 using Hikvision.Web.Services.Hikvision;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +11,13 @@ public class SettingsController : Controller
 {
     private readonly AppDbContext _db;
     private readonly IHikvisionIsapiClient _client;
+    private readonly IAuditLogger _audit;
 
-    public SettingsController(AppDbContext db, IHikvisionIsapiClient client)
+    public SettingsController(AppDbContext db, IHikvisionIsapiClient client, IAuditLogger audit)
     {
         _db = db;
         _client = client;
+        _audit = audit;
     }
 
     private async Task<DeviceConfig> GetOrCreateAsync()
@@ -45,6 +48,7 @@ public class SettingsController : Controller
         cfg.Username = model.Username;
         cfg.Password = model.Password;
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("تعديل إعدادات الجهاز", $"{cfg.Host}:{cfg.Port}، مستخدم {cfg.Username}.");
 
         TempData["Success"] = "تم حفظ إعدادات الجهاز.";
         return RedirectToAction(nameof(Device));

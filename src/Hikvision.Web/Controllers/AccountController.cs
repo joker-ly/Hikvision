@@ -16,11 +16,14 @@ public class AccountController : Controller
 {
     private readonly AppDbContext _db;
     private readonly PasswordHasher<AppUser> _hasher;
+    private readonly Hikvision.Web.Services.Audit.IAuditLogger _audit;
 
-    public AccountController(AppDbContext db, PasswordHasher<AppUser> hasher)
+    public AccountController(AppDbContext db, PasswordHasher<AppUser> hasher,
+        Hikvision.Web.Services.Audit.IAuditLogger audit)
     {
         _db = db;
         _hasher = hasher;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -50,6 +53,7 @@ public class AccountController : Controller
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
+        await _audit.LogAsync("تسجيل دخول", $"المستخدم {user.Username}.");
 
         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return Redirect(model.ReturnUrl);

@@ -1,5 +1,6 @@
 using Hikvision.Web.Data;
 using Hikvision.Web.Models.Entities;
+using Hikvision.Web.Services.Audit;
 using Hikvision.Web.Services.Hikvision;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,11 +12,13 @@ public class EmployeesController : Controller
 {
     private readonly AppDbContext _db;
     private readonly IHikvisionIsapiClient _client;
+    private readonly IAuditLogger _audit;
 
-    public EmployeesController(AppDbContext db, IHikvisionIsapiClient client)
+    public EmployeesController(AppDbContext db, IHikvisionIsapiClient client, IAuditLogger audit)
     {
         _db = db;
         _client = client;
+        _audit = audit;
     }
 
     private async Task PopulateGroups(int? selected = null)
@@ -73,6 +76,7 @@ public class EmployeesController : Controller
                 await _db.SaveChangesAsync();
             }
 
+            await _audit.LogAsync("استيراد موظفين من الجهاز", $"مستورد {imported}، موجود مسبقًا {skipped}، إلى المجموعة #{groupId}.");
             TempData["Success"] = $"اكتمل الاستيراد من الجهاز: مستورد {imported}، موجود مسبقًا {skipped}.";
         }
         catch (Exception ex)
@@ -105,6 +109,7 @@ public class EmployeesController : Controller
 
         _db.Employees.Add(model);
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("إضافة موظف", $"{model.FullName} (رقم جهاز {model.DeviceEmployeeNo}).");
         TempData["Success"] = "تمت إضافة الموظف.";
         return RedirectToAction(nameof(Index));
     }
@@ -145,6 +150,7 @@ public class EmployeesController : Controller
         emp.HireDate = model.HireDate;
 
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("تعديل موظف", $"{emp.FullName} (رقم جهاز {emp.DeviceEmployeeNo}).");
         TempData["Success"] = "تم تحديث بيانات الموظف.";
         return RedirectToAction(nameof(Index));
     }
@@ -157,6 +163,7 @@ public class EmployeesController : Controller
         if (emp is null) return NotFound();
         _db.Employees.Remove(emp);
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("حذف موظف", $"{emp.FullName} (رقم جهاز {emp.DeviceEmployeeNo}).");
         TempData["Success"] = "تم حذف الموظف.";
         return RedirectToAction(nameof(Index));
     }
@@ -168,6 +175,7 @@ public class EmployeesController : Controller
         // تُحذف سجلات الحضور المرتبطة أولًا ثم جميع الموظفين
         await _db.AttendanceRecords.ExecuteDeleteAsync();
         var count = await _db.Employees.ExecuteDeleteAsync();
+        await _audit.LogAsync("حذف جميع الموظفين", $"تم حذف {count} موظفًا وكل سجلات حضورهم.");
         TempData["Success"] = $"تم حذف جميع الموظفين ({count}) وسجلات حضورهم. يمكنك الآن إعادة الاستيراد بالتوزيع الصحيح.";
         return RedirectToAction(nameof(Index));
     }

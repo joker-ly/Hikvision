@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Hikvision.Web.Services.Audit;
 using Hikvision.Web.Services.Sync;
 using Hikvision.Web.Services.TimeZoneSupport;
 using Microsoft.AspNetCore.Mvc;
@@ -10,12 +11,14 @@ public class SyncController : Controller
     private readonly IAttendanceSyncService _sync;
     private readonly IAppClock _clock;
     private readonly IHostEnvironment _env;
+    private readonly IAuditLogger _audit;
 
-    public SyncController(IAttendanceSyncService sync, IAppClock clock, IHostEnvironment env)
+    public SyncController(IAttendanceSyncService sync, IAppClock clock, IHostEnvironment env, IAuditLogger audit)
     {
         _sync = sync;
         _clock = clock;
         _env = env;
+        _audit = audit;
     }
 
     private string LogsDir => Path.Combine(_env.ContentRootPath, "logs");
@@ -47,6 +50,10 @@ public class SyncController : Controller
     {
         var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : (int?)null;
         var result = await _sync.RunAsync(from, to, userId);
+
+        await _audit.LogAsync("مزامنة الحضور",
+            $"الفترة {result.FromTime:yyyy-MM-dd HH:mm} - {result.ToTime:yyyy-MM-dd HH:mm}، " +
+            $"مُدخل {result.InsertedCount}، مكرر {result.SkippedDuplicateCount}، نجاح: {result.Success}.");
 
         if (result.Success)
         {

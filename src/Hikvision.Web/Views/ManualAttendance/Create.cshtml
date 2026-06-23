@@ -3,9 +3,9 @@
     ViewData["Title"] = "إدخال سجل حضور يدوي";
 }
 <h2>إدخال سجل حضور يدوي</h2>
-<p class="text-muted">يُوثَّق هذا السجل بوضوح كـ "يدوي" مع نوعه وسببه، ويُميَّز عن سجلات الجهاز.</p>
+<p class="text-muted">يدعم فترة من–إلى (مثل إجازة عدة أيام). تُولَّد بصمة دخول وخروج آليًا بالأوقات أدناه، ويُوثَّق كـ "يدوي".</p>
 
-<form asp-action="Create" method="post" class="mt-3" style="max-width:650px;">
+<form asp-action="Create" method="post" class="mt-3" style="max-width:700px;">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <div class="mb-3">
         <label asp-for="EmployeeId" class="form-label"></label>
@@ -16,33 +16,61 @@
     </div>
     <div class="mb-3">
         <label asp-for="ManualType" class="form-label"></label>
-        <select asp-for="ManualType" class="form-select">
-            <option value="@((int)ManualAttendanceType.WorkMission)">مهمة عمل</option>
+        <select asp-for="ManualType" class="form-select" id="manualType">
             <option value="@((int)ManualAttendanceType.Leave)">إجازة</option>
-            <option value="@((int)ManualAttendanceType.PermittedExit)">خروج بإذن</option>
+            <option value="@((int)ManualAttendanceType.WorkMission)">مهمة عمل</option>
             <option value="@((int)ManualAttendanceType.TaskDone)">إنجاز عمل</option>
+            <option value="@((int)ManualAttendanceType.PermittedExit)">خروج بإذن (مغادرة مبكرة)</option>
         </select>
         <span asp-validation-for="ManualType" class="text-danger"></span>
+        <div class="form-text" id="permitHint" style="display:none">
+            لإذن الخروج المبكر: يُسجَّل خروج عند "وقت الخروج" أدناه، ويُعفى الموظف من احتساب المغادرة المبكرة غيابًا.
+        </div>
     </div>
-    <div class="mb-3">
-        <label asp-for="EventTime" class="form-label"></label>
-        <input asp-for="EventTime" type="datetime-local" class="form-control" />
-        <span asp-validation-for="EventTime" class="text-danger"></span>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="FromDate" class="form-label"></label>
+            <input asp-for="FromDate" type="date" class="form-control" />
+            <span asp-validation-for="FromDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="ToDate" class="form-label"></label>
+            <input asp-for="ToDate" type="date" class="form-control" />
+            <span asp-validation-for="ToDate" class="text-danger"></span>
+        </div>
     </div>
-    <div class="mb-3">
-        <label asp-for="Direction" class="form-label"></label>
-        <select asp-for="Direction" class="form-select">
-            <option value="@((int)PunchDirection.Undefined)">غير محدد</option>
-            <option value="@((int)PunchDirection.CheckIn)">دخول</option>
-            <option value="@((int)PunchDirection.CheckOut)">خروج</option>
-        </select>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="StartTime" class="form-label"></label>
+            <input asp-for="StartTime" type="time" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="EndTime" class="form-label"></label>
+            <input asp-for="EndTime" type="time" class="form-control" />
+        </div>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="WorkingDaysOnly" class="form-check-input" />
+        <label asp-for="WorkingDaysOnly" class="form-check-label"></label>
+        <div class="form-text">عند التفعيل، تُتجاهَل العطلات الأسبوعية حسب أيام عمل المجموعة.</div>
     </div>
     <div class="mb-3">
         <label asp-for="Note" class="form-label"></label>
         <textarea asp-for="Note" class="form-control" rows="3" placeholder="سبب أو توضيح السجل اليدوي (إلزامي)"></textarea>
         <span asp-validation-for="Note" class="text-danger"></span>
     </div>
-    <button type="submit" class="btn btn-primary">حفظ السجل</button>
+    <button type="submit" class="btn btn-primary">حفظ</button>
     <a asp-controller="Attendance" asp-action="Index" class="btn btn-secondary">إلغاء</a>
 </form>
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var sel = document.getElementById('manualType');
+            var hint = document.getElementById('permitHint');
+            function toggle() { hint.style.display = (sel.value === '@((int)ManualAttendanceType.PermittedExit)') ? 'block' : 'none'; }
+            sel.addEventListener('change', toggle); toggle();
+        })();
+    </script>
+}

@@ -84,8 +84,10 @@ public class HomeController : Controller
                     }
                 }
 
-                // ما زال بالداخل: آخر بصمة دخول وليست خروجًا
-                if (lastRec.Direction != PunchDirection.CheckOut)
+                // ما زال بالداخل: لم يبصم عند/بعد موعد الخروج المضبوط، وآخر بصمة ليست خروجًا
+                var checkedOutBySchedule = schedule?.EndTime is { } end &&
+                    recs.Any(r => r.EventTime.TimeOfDay >= end.ToTimeSpan());
+                if (!checkedOutBySchedule && lastRec.Direction != PunchDirection.CheckOut)
                     vm.StillInside.Add(new DashboardEmpRow(
                         e.Id, e.FullName, groupName, $"آخر حركة {lastRec.EventTime:HH:mm}"));
             }

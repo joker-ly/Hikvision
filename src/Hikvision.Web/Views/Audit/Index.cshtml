@@ -1,0 +1,46 @@
+@model IEnumerable<AuditLog>
+@{
+    ViewData["Title"] = "سجل العمليات";
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+}
+<h2 class="mb-3">سجل العمليات</h2>
+<p class="text-muted">يوثّق كل عملية في النظام: المستخدم، العملية، التفاصيل، والتاريخ والوقت.</p>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead class="table-light">
+        <tr><th>التاريخ والوقت</th><th>المستخدم</th><th>العملية</th><th>التفاصيل</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var a in Model)
+        {
+            <tr>
+                <td>@a.TimestampLocal.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@a.UserName</td>
+                <td>@a.Action</td>
+                <td>@a.Details</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (!Model.Any())
+{
+    <p class="text-muted">لا توجد عمليات مسجّلة بعد.</p>
+}
+
+@if (totalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @if (page > 1)
+            {
+                <li class="page-item"><a class="page-link" asp-route-page="@(page-1)">السابق</a></li>
+            }
+            <li class="page-item disabled"><span class="page-link">@page / @totalPages</span></li>
+            @if (page < totalPages)
+            {
+                <li class="page-item"><a class="page-link" asp-route-page="@(page+1)">التالي</a></li>
+            }
+        </ul>
+    </nav>
+}

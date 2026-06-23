@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
     public DbSet<DeviceConfig> DeviceConfigs => Set<DeviceConfig>();
     public DbSet<SyncLog> SyncLogs => Set<SyncLog>();
+    public DbSet<Holiday> Holidays => Set<Holiday>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {

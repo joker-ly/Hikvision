@@ -8,8 +8,12 @@ public interface IAttendanceCalculationService
     Task<List<DailyAttendanceResult>> CalculateAsync(
         int employeeId, DateOnly from, DateOnly to, CancellationToken ct = default);
 
+    /// <summary>تحميل تواريخ الإجازات الرسمية ضمن المدى كمجموعة تواريخ مفردة.</summary>
+    Task<ISet<DateOnly>> LoadHolidaysAsync(DateOnly from, DateOnly to, CancellationToken ct = default);
+
     /// <summary>احتساب الحضور من بيانات محمّلة مسبقًا (يُستخدم في التقارير المجمّعة).</summary>
     List<DailyAttendanceResult> Calculate(
         EmployeeGroup group, WorkSchedule? schedule,
-        IReadOnlyCollection<AttendanceRecord> records, DateOnly from, DateOnly to);
+        IReadOnlyCollection<AttendanceRecord> records, DateOnly from, DateOnly to,
+        ISet<DateOnly> holidays);
 }

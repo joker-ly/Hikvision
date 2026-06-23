@@ -18,6 +18,9 @@ public static class DbSeeder
         else
             await db.Database.EnsureCreatedAsync();
 
+        // إنشاء الجداول الجديدة إن لم تكن موجودة (لقواعد بيانات أُنشئت سابقًا بـ EnsureCreated)
+        await EnsureNewTablesAsync(db);
+
         // 1) مستخدم المدير
         if (!await db.Users.AnyAsync())
         {
@@ -84,5 +87,37 @@ public static class DbSeeder
         }
 
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// ينشئ جداول Holidays و AuditLogs إن لم تكن موجودة. مفيد للقواعد التي أُنشئت
+    /// سابقًا عبر EnsureCreated (التي لا تضيف الجداول الجديدة تلقائيًا).
+    /// </summary>
+    private static async Task EnsureNewTablesAsync(AppDbContext db)
+    {
+        const string sql = @"
+IF OBJECT_ID(N'[Holidays]', N'U') IS NULL
+CREATE TABLE [Holidays] (
+    [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [StartDate] date NOT NULL,
+    [EndDate] date NOT NULL,
+    [Description] nvarchar(300) NOT NULL
+);
+IF OBJECT_ID(N'[AuditLogs]', N'U') IS NULL
+CREATE TABLE [AuditLogs] (
+    [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [UserName] nvarchar(150) NOT NULL,
+    [Action] nvarchar(100) NOT NULL,
+    [Details] nvarchar(1000) NULL,
+    [TimestampLocal] datetime2 NOT NULL
+);";
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(sql);
+        }
+        catch
+        {
+            // في حال استخدام الترحيلات تكون الجداول موجودة بالفعل
+        }
     }
 }
