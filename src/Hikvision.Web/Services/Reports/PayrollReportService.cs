@@ -54,6 +54,7 @@ public class PayrollReportService : IPayrollReportService
             {
                 EmployeeId = emp.Id,
                 FullName = emp.FullName,
+                FinancialNo = emp.FinancialNo,
                 GroupName = emp.Group!.Name,
                 DaysPresent = days.Count(d => d.IsPresent),
                 DaysAbsent = absentDays,

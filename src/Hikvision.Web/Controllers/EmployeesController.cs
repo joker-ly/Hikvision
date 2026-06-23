@@ -96,7 +96,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("EmployeeGroupId,DeviceEmployeeNo,FullName,NationalId,IsActive,BaseSalary,HireDate")] Employee model)
+    public async Task<IActionResult> Create([Bind("EmployeeGroupId,DeviceEmployeeNo,FinancialNo,FullName,NationalId,IsActive,BaseSalary,HireDate")] Employee model)
     {
         if (await _db.Employees.AnyAsync(e => e.DeviceEmployeeNo == model.DeviceEmployeeNo))
             ModelState.AddModelError(nameof(Employee.DeviceEmployeeNo), "رقم الموظف على الجهاز مستخدم بالفعل.");
@@ -125,7 +125,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,EmployeeGroupId,DeviceEmployeeNo,FullName,NationalId,IsActive,BaseSalary,HireDate")] Employee model)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,EmployeeGroupId,DeviceEmployeeNo,FinancialNo,FullName,NationalId,IsActive,BaseSalary,HireDate")] Employee model)
     {
         if (id != model.Id) return NotFound();
 
@@ -143,6 +143,7 @@ public class EmployeesController : Controller
 
         emp.EmployeeGroupId = model.EmployeeGroupId;
         emp.DeviceEmployeeNo = model.DeviceEmployeeNo;
+        emp.FinancialNo = model.FinancialNo;
         emp.FullName = model.FullName;
         emp.NationalId = model.NationalId;
         emp.IsActive = model.IsActive;

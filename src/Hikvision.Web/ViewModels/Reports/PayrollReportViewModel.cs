@@ -22,6 +22,7 @@ public class PayrollRow
 {
     public int EmployeeId { get; set; }
     public string FullName { get; set; } = string.Empty;
+    public string? FinancialNo { get; set; }
     public string GroupName { get; set; } = string.Empty;
 
     public int DaysPresent { get; set; }

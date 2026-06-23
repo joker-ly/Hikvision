@@ -37,35 +37,9 @@ public class PayrollApiController : ControllerBase
         [FromQuery] string? from, [FromQuery] string? to,
         [FromQuery] int? groupId, CancellationToken ct)
     {
-        // التحقق من مفتاح API إن كان مضبوطًا
-        var configuredKey = _config["Api:Key"];
-        if (!string.IsNullOrEmpty(configuredKey))
-        {
-            var provided = Request.Headers["X-Api-Key"].ToString();
-            if (!string.Equals(provided, configuredKey, StringComparison.Ordinal))
-                return Unauthorized(new { error = "مفتاح API غير صحيح أو مفقود (X-Api-Key)." });
-        }
-
-        DateOnly fromDate, toDate;
-
-        if (month.HasValue)
-        {
-            if (month < 1 || month > 12)
-                return BadRequest(new { error = "رقم الشهر يجب أن يكون بين 1 و 12." });
-
-            var y = year ?? _clock.Now.Year;
-            fromDate = new DateOnly(y, month.Value, 1);
-            toDate = new DateOnly(y, month.Value, DateTime.DaysInMonth(y, month.Value));
-        }
-        else
-        {
-            if (!DateOnly.TryParse(from, CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate) ||
-                !DateOnly.TryParse(to, CultureInfo.InvariantCulture, DateTimeStyles.None, out toDate))
-                return BadRequest(new { error = "أرسل month (1-12) أو from و to بصيغة yyyy-MM-dd." });
-
-            if (toDate < fromDate)
-                return BadRequest(new { error = "to يجب أن يكون بعد from." });
-        }
+        if (CheckApiKey() is { } keyErr) return keyErr;
+        if (!ResolveRange(month, year, from, to, out var fromDate, out var toDate, out var rangeErr))
+            return BadRequest(new { error = rangeErr });
 
         var report = await _reports.BuildAsync(groupId, fromDate, toDate, ct);
 
@@ -79,6 +53,7 @@ public class PayrollApiController : ControllerBase
             {
                 r.EmployeeId,
                 r.FullName,
+                r.FinancialNo,
                 r.GroupName,
                 r.DaysPresent,
                 r.DaysAbsent,
@@ -93,6 +68,69 @@ public class PayrollApiController : ControllerBase
                 r.EstimatedPay
             })
         });
+    }
+
+    // واجهة مبسّطة للمنظومة المالية: الاسم + رقم المنظومة + إجمالي أيام الحضور (شاملة الإجازة)
+    // GET /api/payroll/financial?month=3
+    [HttpGet("financial")]
+    public async Task<IActionResult> Financial(
+        [FromQuery] int? month, [FromQuery] int? year,
+        [FromQuery] string? from, [FromQuery] string? to,
+        [FromQuery] int? groupId, CancellationToken ct)
+    {
+        if (CheckApiKey() is { } keyErr) return keyErr;
+        if (!ResolveRange(month, year, from, to, out var fromDate, out var toDate, out var rangeErr))
+            return BadRequest(new { error = rangeErr });
+
+        var report = await _reports.BuildAsync(groupId, fromDate, toDate, ct);
+
+        return Ok(new
+        {
+            from = fromDate.ToString("yyyy-MM-dd"),
+            to = toDate.ToString("yyyy-MM-dd"),
+            count = report.Rows.Count,
+            employees = report.Rows.Select(r => new
+            {
+                name = r.FullName,
+                financialNo = r.FinancialNo,
+                // أيام الحضور تشمل الإجازات والعطل والمهام (كل ما يُحتسب حضورًا مدفوعًا)
+                attendanceDays = r.DaysPresent
+            })
+        });
+    }
+
+    private IActionResult? CheckApiKey()
+    {
+        var configuredKey = _config["Api:Key"];
+        if (string.IsNullOrEmpty(configuredKey)) return null;
+        var provided = Request.Headers["X-Api-Key"].ToString();
+        return string.Equals(provided, configuredKey, StringComparison.Ordinal)
+            ? null
+            : Unauthorized(new { error = "مفتاح API غير صحيح أو مفقود (X-Api-Key)." });
+    }
+
+    private bool ResolveRange(int? month, int? year, string? from, string? to,
+        out DateOnly fromDate, out DateOnly toDate, out string? error)
+    {
+        fromDate = default; toDate = default; error = null;
+
+        if (month.HasValue)
+        {
+            if (month < 1 || month > 12) { error = "رقم الشهر يجب أن يكون بين 1 و 12."; return false; }
+            var y = year ?? _clock.Now.Year;
+            fromDate = new DateOnly(y, month.Value, 1);
+            toDate = new DateOnly(y, month.Value, DateTime.DaysInMonth(y, month.Value));
+            return true;
+        }
+
+        if (!DateOnly.TryParse(from, CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate) ||
+            !DateOnly.TryParse(to, CultureInfo.InvariantCulture, DateTimeStyles.None, out toDate))
+        {
+            error = "أرسل month (1-12) أو from و to بصيغة yyyy-MM-dd.";
+            return false;
+        }
+        if (toDate < fromDate) { error = "to يجب أن يكون بعد from."; return false; }
+        return true;
     }
 }
 

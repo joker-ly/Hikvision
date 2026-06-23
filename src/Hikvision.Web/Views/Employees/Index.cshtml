@@ -42,6 +42,7 @@
         <tr>
             <th>الاسم</th>
             <th>رقم الجهاز</th>
+            <th>رقم المنظومة</th>
             <th>المجموعة</th>
             <th>الراتب الأساسي</th>
             <th>نشط</th>
@@ -54,6 +55,7 @@
             <tr>
                 <td>@e.FullName</td>
                 <td><span class="badge bg-soft-secondary">@e.DeviceEmployeeNo</span></td>
+                <td>@(string.IsNullOrEmpty(e.FinancialNo) ? "—" : e.FinancialNo)</td>
                 <td>@e.Group?.Name</td>
                 <td>@(e.BaseSalary?.ToString("N2") ?? "—")</td>
                 <td>@(e.IsActive ? Html.Raw("<span class='badge bg-soft-success'>نعم</span>") : Html.Raw("<span class='badge bg-soft-danger'>لا</span>"))</td>

@@ -16,6 +16,11 @@ public class Employee
     [Display(Name = "رقم الموظف على الجهاز")]
     public string DeviceEmployeeNo { get; set; } = string.Empty;
 
+    /// <summary>رقم الموظف في المنظومة المالية الخارجية (للربط عند تصدير الصرف).</summary>
+    [MaxLength(64)]
+    [Display(Name = "رقم المنظومة المالية")]
+    public string? FinancialNo { get; set; }
+
     [Required(ErrorMessage = "الاسم مطلوب"), MaxLength(200)]
     [Display(Name = "الاسم الكامل")]
     public string FullName { get; set; } = string.Empty;

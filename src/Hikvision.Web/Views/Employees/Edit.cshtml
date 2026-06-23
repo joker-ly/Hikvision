@@ -17,6 +17,11 @@
         <span asp-validation-for="DeviceEmployeeNo" class="text-danger"></span>
     </div>
     <div class="mb-3">
+        <label asp-for="FinancialNo" class="form-label"></label>
+        <input asp-for="FinancialNo" class="form-control" />
+        <div class="form-text">رقم الموظف في المنظومة المالية الخارجية (يُستخدم في الـ API).</div>
+    </div>
+    <div class="mb-3">
         <label asp-for="EmployeeGroupId" class="form-label">المجموعة</label>
         <select asp-for="EmployeeGroupId" asp-items="ViewBag.Groups" class="form-select"></select>
     </div>

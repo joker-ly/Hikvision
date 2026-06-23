@@ -110,7 +110,9 @@ CREATE TABLE [AuditLogs] (
     [Action] nvarchar(100) NOT NULL,
     [Details] nvarchar(1000) NULL,
     [TimestampLocal] datetime2 NOT NULL
-);";
+);
+IF COL_LENGTH(N'[Employees]', N'FinancialNo') IS NULL
+ALTER TABLE [Employees] ADD [FinancialNo] nvarchar(64) NULL;";
         try
         {
             await db.Database.ExecuteSqlRawAsync(sql);
