@@ -9,12 +9,16 @@ public class SyncController : Controller
 {
     private readonly IAttendanceSyncService _sync;
     private readonly IAppClock _clock;
+    private readonly IHostEnvironment _env;
 
-    public SyncController(IAttendanceSyncService sync, IAppClock clock)
+    public SyncController(IAttendanceSyncService sync, IAppClock clock, IHostEnvironment env)
     {
         _sync = sync;
         _clock = clock;
+        _env = env;
     }
+
+    private string LogsDir => Path.Combine(_env.ContentRootPath, "logs");
 
     [HttpGet]
     public async Task<IActionResult> Index()
@@ -23,6 +27,16 @@ public class SyncController : Controller
         ViewBag.DefaultFrom = (ViewBag.LastSync as Hikvision.Web.Models.Entities.SyncLog)?.ToTime
             ?? _clock.Now.AddDays(-7);
         ViewBag.DefaultTo = _clock.Now;
+
+        // قائمة ملفات سجل الأرقام غير المسجّلة (الأحدث أولًا)
+        ViewBag.LogFiles = Directory.Exists(LogsDir)
+            ? new DirectoryInfo(LogsDir).GetFiles("unmatched-*.csv")
+                .OrderByDescending(f => f.CreationTimeUtc)
+                .Take(20)
+                .Select(f => f.Name)
+                .ToList()
+            : new List<string>();
+
         return View();
     }
 
@@ -39,8 +53,8 @@ public class SyncController : Controller
                 $"اكتملت المزامنة: مسحوب {result.FetchedCount}، مُدخل {result.InsertedCount}، " +
                 $"مكرر {result.SkippedDuplicateCount}، بلا شخص {result.NoPersonCount}، " +
                 $"أرقام غير مسجّلة {result.UnmatchedEmployeeCount}.";
-            if (result.UnmatchedNumbers.Count > 0)
-                msg += " الأرقام غير المسجّلة: " + string.Join("، ", result.UnmatchedNumbers);
+            if (result.UnmatchedLogFile is not null)
+                msg += $" تم حفظ ملف بالأرقام غير المسجّلة (logs/{result.UnmatchedLogFile}) — يمكن تنزيله من أسفل الصفحة.";
             TempData["Success"] = msg;
         }
         else
@@ -48,5 +62,20 @@ public class SyncController : Controller
             TempData["Error"] = $"فشلت المزامنة: {result.ErrorMessage}";
         }
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public IActionResult DownloadLog(string name)
+    {
+        // حماية من اجتياز المسارات: نسمح فقط باسم ملف بسيط ضمن مجلد logs
+        var safeName = Path.GetFileName(name);
+        if (string.IsNullOrWhiteSpace(safeName) || !safeName.StartsWith("unmatched-") || !safeName.EndsWith(".csv"))
+            return NotFound();
+
+        var path = Path.Combine(LogsDir, safeName);
+        if (!System.IO.File.Exists(path)) return NotFound();
+
+        var bytes = System.IO.File.ReadAllBytes(path);
+        return File(bytes, "text/csv", safeName);
     }
 }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Hikvision.Web.Data;
 using Hikvision.Web.Models.Entities;
 using Hikvision.Web.Models.Enums;
@@ -14,16 +15,18 @@ public class AttendanceSyncService : IAttendanceSyncService
     private readonly IHikvisionIsapiClient _client;
     private readonly IConfiguration _config;
     private readonly IAppClock _clock;
+    private readonly IHostEnvironment _env;
     private readonly ILogger<AttendanceSyncService> _logger;
 
     public AttendanceSyncService(
         AppDbContext db, IHikvisionIsapiClient client, IConfiguration config,
-        IAppClock clock, ILogger<AttendanceSyncService> logger)
+        IAppClock clock, IHostEnvironment env, ILogger<AttendanceSyncService> logger)
     {
         _db = db;
         _client = client;
         _config = config;
         _clock = clock;
+        _env = env;
         _logger = logger;
     }
 
@@ -73,7 +76,7 @@ public class AttendanceSyncService : IAttendanceSyncService
             var endOff = _clock.ToOffset(toLocal);
 
             var toAdd = new List<AttendanceRecord>();
-            var unmatchedNumbers = new HashSet<string>();
+            var unmatchedNumbers = new Dictionary<string, int>();
 
             await foreach (var ev in _client.GetEventsAsync(startOff, endOff, ct))
             {
@@ -90,7 +93,8 @@ public class AttendanceSyncService : IAttendanceSyncService
                 if (!employeeByDeviceNo.TryGetValue(ev.EmployeeNoString, out var empId))
                 {
                     result.UnmatchedEmployeeCount++;
-                    unmatchedNumbers.Add(ev.EmployeeNoString);
+                    unmatchedNumbers[ev.EmployeeNoString] =
+                        unmatchedNumbers.GetValueOrDefault(ev.EmployeeNoString) + 1;
                     continue;
                 }
 
@@ -128,13 +132,15 @@ public class AttendanceSyncService : IAttendanceSyncService
             if (cfg is not null)
                 cfg.LastSyncTime = toLocal;
 
-            // حفظ عيّنة من الأرقام غير المطابَقة للمراجعة + تسجيلها في سجل التطبيق
-            result.UnmatchedNumbers = unmatchedNumbers.OrderBy(x => x).Take(100).ToList();
+            // عيّنة للعرض + كتابة ملف سجل كامل بالأرقام غير المسجّلة
+            result.UnmatchedNumbers = unmatchedNumbers.Keys.OrderBy(x => x).Take(100).ToList();
             if (unmatchedNumbers.Count > 0)
             {
                 _logger.LogWarning(
                     "مزامنة: {Count} رقم جهاز غير مسجّل كموظف. الأرقام: {Numbers}",
                     unmatchedNumbers.Count, string.Join(", ", result.UnmatchedNumbers));
+
+                result.UnmatchedLogFile = WriteUnmatchedLog(unmatchedNumbers, result);
             }
 
             log.Success = true;
@@ -160,6 +166,34 @@ public class AttendanceSyncService : IAttendanceSyncService
         }
 
         return result;
+    }
+
+    /// <summary>يكتب ملف CSV بالأرقام غير المسجّلة وعدد أحداث كل رقم، ويعيد اسم الملف.</summary>
+    private string? WriteUnmatchedLog(Dictionary<string, int> unmatched, SyncResult result)
+    {
+        try
+        {
+            var dir = Path.Combine(_env.ContentRootPath, "logs");
+            Directory.CreateDirectory(dir);
+            var fileName = $"unmatched-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+            var path = Path.Combine(dir, fileName);
+
+            var sb = new StringBuilder();
+            sb.Append('﻿'); // BOM لإظهار العربية في Excel
+            sb.AppendLine($"# مزامنة {result.FromTime:yyyy-MM-dd HH:mm} - {result.ToTime:yyyy-MM-dd HH:mm}");
+            sb.AppendLine($"# إجمالي الأرقام غير المسجّلة: {unmatched.Count} | إجمالي الأحداث غير المسجّلة: {result.UnmatchedEmployeeCount}");
+            sb.AppendLine("رقم الجهاز,عدد الأحداث");
+            foreach (var kv in unmatched.OrderByDescending(x => x.Value).ThenBy(x => x.Key))
+                sb.AppendLine($"{kv.Key},{kv.Value}");
+
+            File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
+            return fileName;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "تعذّر كتابة ملف سجل الأرقام غير المسجّلة");
+            return null;
+        }
     }
 
     private bool TryParseEventTime(string? raw, out DateTime localTime)

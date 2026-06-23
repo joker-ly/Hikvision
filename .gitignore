@@ -24,6 +24,9 @@ artifacts/
 appsettings.*.local.json
 secrets.json
 
+## Generated sync log files
+**/logs/
+
 ## OS files
 .DS_Store
 Thumbs.db

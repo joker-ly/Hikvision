@@ -3,6 +3,7 @@
     var last = ViewBag.LastSync as SyncLog;
     var defFrom = (DateTime)ViewBag.DefaultFrom;
     var defTo = (DateTime)ViewBag.DefaultTo;
+    var logFiles = ViewBag.LogFiles as List<string> ?? new List<string>();
 }
 <h2 class="mb-3">المزامنة مع الجهاز</h2>
 
@@ -44,4 +45,23 @@ else
             <tr><th>الخطأ</th><td class="text-danger">@last.ErrorMessage</td></tr>
         }
     </table>
+}
+
+<h5 class="mt-4">ملفات الأرقام غير المسجّلة</h5>
+@if (logFiles.Count == 0)
+{
+    <p class="text-muted">لا توجد ملفات بعد. يُنشأ ملف تلقائيًا عند وجود أرقام غير مسجّلة في المزامنة.</p>
+}
+else
+{
+    <ul class="list-group" style="max-width:650px;">
+        @foreach (var f in logFiles)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>@f</span>
+                <a class="btn btn-sm btn-outline-success" asp-action="DownloadLog" asp-route-name="@f">تنزيل CSV</a>
+            </li>
+        }
+    </ul>
+    <small class="text-muted">الملفات محفوظة في مجلد <code>logs</code> داخل المشروع.</small>
 }

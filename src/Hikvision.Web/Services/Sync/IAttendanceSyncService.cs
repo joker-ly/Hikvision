@@ -14,6 +14,8 @@ public class SyncResult
     public int NoPersonCount { get; set; }
     /// <summary>عيّنة من أرقام الأجهزة التي لم تطابق أي موظف (للمراجعة).</summary>
     public List<string> UnmatchedNumbers { get; set; } = new();
+    /// <summary>اسم ملف السجل (CSV) الذي يسرد كل الأرقام غير المسجّلة، إن وُجد.</summary>
+    public string? UnmatchedLogFile { get; set; }
     public DateTime FromTime { get; set; }
     public DateTime ToTime { get; set; }
 }
