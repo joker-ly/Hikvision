@@ -123,12 +123,18 @@ public class HikvisionIsapiClient : IHikvisionIsapiClient
 
             position += result.NumOfMatches;
 
-            // التوقف عند انتهاء النتائج
-            if (!string.Equals(result.ResponseStatusStrg, "MORE", StringComparison.OrdinalIgnoreCase))
-                yield break;
-
+            // التوقف: لا نتائج، أو بلغنا الإجمالي. نعتمد totalMatches أساسًا لأن
+            // responseStatusStrg قد لا يُرسَل في بعض الإصدارات.
             if (result.NumOfMatches <= 0)
                 yield break;
+            if (result.TotalMatches > 0)
+            {
+                if (position >= result.TotalMatches) yield break;
+            }
+            else if (!string.Equals(result.ResponseStatusStrg, "MORE", StringComparison.OrdinalIgnoreCase))
+            {
+                yield break;
+            }
         }
     }
 
@@ -171,10 +177,17 @@ public class HikvisionIsapiClient : IHikvisionIsapiClient
 
             position += result.NumOfMatches;
 
-            if (!string.Equals(result.ResponseStatusStrg, "MORE", StringComparison.OrdinalIgnoreCase))
-                yield break;
+            // الاعتماد على totalMatches لتفادي التوقف المبكر إن غاب responseStatusStrg
             if (result.NumOfMatches <= 0)
                 yield break;
+            if (result.TotalMatches > 0)
+            {
+                if (position >= result.TotalMatches) yield break;
+            }
+            else if (!string.Equals(result.ResponseStatusStrg, "MORE", StringComparison.OrdinalIgnoreCase))
+            {
+                yield break;
+            }
         }
     }
 }
