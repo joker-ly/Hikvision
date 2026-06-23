@@ -52,8 +52,8 @@ public class SyncController : Controller
         {
             var msg =
                 $"اكتملت المزامنة: مسحوب {result.FetchedCount}، مُدخل {result.InsertedCount}، " +
-                $"مكرر {result.SkippedDuplicateCount}، بلا شخص {result.NoPersonCount}، " +
-                $"أرقام غير مسجّلة {result.UnmatchedEmployeeCount}.";
+                $"مكرر {result.SkippedDuplicateCount}، أرقام غير مسجّلة {result.UnmatchedEmployeeCount}. " +
+                $"تم تجاهل {result.NoPersonCount} حدثًا غير متعلق بالحضور (فتح/إغلاق باب ومحاولات فاشلة).";
             if (result.UnmatchedLogFile is not null || result.NoPersonLogFile is not null)
                 msg += " تم حفظ ملف(ات) سجل قابلة للتنزيل من أسفل الصفحة.";
             TempData["Success"] = msg;

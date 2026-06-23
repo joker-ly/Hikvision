@@ -78,6 +78,9 @@ public class AttendanceSyncService : IAttendanceSyncService
             var toAdd = new List<AttendanceRecord>();
             var unmatchedNumbers = new Dictionary<string, int>();
             var noPerson = new List<NoPersonEvent>();
+            // أحداث "بلا شخص" (فتح/إغلاق باب، محاولات فاشلة) لا تخص الحضور وتُتجاهَل.
+            // لا نكتب لها ملف سجل إلا عند تفعيله صراحةً للتشخيص.
+            var writeNoPersonLog = _config.GetValue("Device:WriteNoPersonLog", false);
 
             await foreach (var ev in _client.GetEventsAsync(startOff, endOff, ct))
             {
@@ -87,7 +90,7 @@ public class AttendanceSyncService : IAttendanceSyncService
                 if (string.IsNullOrWhiteSpace(ev.EmployeeNoString))
                 {
                     result.NoPersonCount++;
-                    if (noPerson.Count < 50000)
+                    if (writeNoPersonLog && noPerson.Count < 50000)
                         noPerson.Add(new NoPersonEvent(
                             ev.Time, ev.Major, ev.Minor, ev.CurrentVerifyMode,
                             ev.CardNo, ev.Name, ev.AttendanceStatus));
@@ -148,8 +151,8 @@ public class AttendanceSyncService : IAttendanceSyncService
                 result.UnmatchedLogFile = WriteUnmatchedLog(unmatchedNumbers, result);
             }
 
-            // ملف سجل الأحداث بلا شخص (لفهم طبيعتها)
-            if (noPerson.Count > 0)
+            // ملف سجل الأحداث بلا شخص — فقط عند تفعيله للتشخيص
+            if (writeNoPersonLog && noPerson.Count > 0)
                 result.NoPersonLogFile = WriteNoPersonLog(noPerson, result);
 
             log.Success = true;
