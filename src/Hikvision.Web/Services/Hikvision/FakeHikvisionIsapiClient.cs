@@ -47,6 +47,16 @@ public class FakeHikvisionIsapiClient : IHikvisionIsapiClient
         }
     }
 
+    public async IAsyncEnumerable<DeviceUser> GetUsersAsync(
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        // أشخاص تجريبيون للاختبار دون جهاز
+        yield return new DeviceUser("1", "أحمد محمد");
+        yield return new DeviceUser("2", "سارة علي");
+        yield return new DeviceUser("3", "خالد حسن");
+    }
+
     private static AcsEventInfo Make(string empNo, string name, DateTimeOffset time, string status) => new()
     {
         EmployeeNoString = empNo,

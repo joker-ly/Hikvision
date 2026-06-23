@@ -7,6 +7,24 @@
     <a asp-action="Create" class="btn btn-primary">+ إضافة موظف</a>
 </div>
 
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form asp-action="ImportFromDevice" method="post" class="row g-2 align-items-end"
+              onsubmit="return confirm('سيتم استيراد الأشخاص المسجّلين على الجهاز إلى المجموعة المختارة. متابعة؟');">
+            <div class="col-md-4">
+                <label class="form-label">استيراد الموظفين من الجهاز إلى مجموعة</label>
+                <select name="groupId" asp-items="ViewBag.Groups" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary">⬇ استيراد من الجهاز</button>
+            </div>
+            <div class="col-12">
+                <small class="text-muted">يجلب الأشخاص المسجّلين على الجهاز (بأرقامهم وأسمائهم) وينشئ الجدد فقط؛ الموجودون مسبقًا يُتخطّون.</small>
+            </div>
+        </form>
+    </div>
+</div>
+
 <table class="table table-striped table-bordered">
     <thead class="table-light">
         <tr>

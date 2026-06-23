@@ -131,4 +131,50 @@ public class HikvisionIsapiClient : IHikvisionIsapiClient
                 yield break;
         }
     }
+
+    public async IAsyncEnumerable<DeviceUser> GetUsersAsync(
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        var cfg = await GetConfigAsync(ct);
+        using var client = CreateClient(cfg);
+
+        var maxResults = _config.GetValue("Device:MaxResultsPerPage", 30);
+        var searchId = Guid.NewGuid().ToString();
+        var position = 0;
+
+        while (!ct.IsCancellationRequested)
+        {
+            var req = new UserInfoSearchRequest
+            {
+                UserInfoSearchCond = new UserInfoSearchCond
+                {
+                    SearchID = searchId,
+                    SearchResultPosition = position,
+                    MaxResults = maxResults
+                }
+            };
+
+            using var httpResp = await client.PostAsJsonAsync(
+                "/ISAPI/AccessControl/UserInfo/Search?format=json", req, JsonOpts, ct);
+            httpResp.EnsureSuccessStatusCode();
+
+            var payload = await httpResp.Content.ReadFromJsonAsync<UserInfoSearchResponse>(JsonOpts, ct);
+            var result = payload?.UserInfoSearch;
+            if (result is null || result.UserInfo.Count == 0)
+                yield break;
+
+            foreach (var u in result.UserInfo)
+            {
+                if (!string.IsNullOrWhiteSpace(u.EmployeeNo))
+                    yield return new DeviceUser(u.EmployeeNo!, u.Name);
+            }
+
+            position += result.NumOfMatches;
+
+            if (!string.Equals(result.ResponseStatusStrg, "MORE", StringComparison.OrdinalIgnoreCase))
+                yield break;
+            if (result.NumOfMatches <= 0)
+                yield break;
+        }
+    }
 }

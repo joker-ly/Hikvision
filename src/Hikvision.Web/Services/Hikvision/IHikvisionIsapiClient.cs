@@ -9,6 +9,9 @@ public interface IHikvisionIsapiClient
     IAsyncEnumerable<AcsEventInfo> GetEventsAsync(
         DateTimeOffset start, DateTimeOffset end, CancellationToken ct = default);
 
+    /// <summary>جلب الأشخاص المسجّلين على الجهاز، مع ترقيم الصفحات تلقائيًا.</summary>
+    IAsyncEnumerable<DeviceUser> GetUsersAsync(CancellationToken ct = default);
+
     /// <summary>اختبار الاتصال بالجهاز والمصادقة. يعيد رسالة وصفية ونجاح/فشل.</summary>
     Task<(bool Success, string Message)> TestConnectionAsync(CancellationToken ct = default);
 }
