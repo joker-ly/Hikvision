@@ -1,0 +1,19 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+.table thead th {
+    white-space: nowrap;
+}
+
+.badge-manual {
+    background-color: #6f42c1;
+}
+
+.badge-device {
+    background-color: #0d6efd;
+}
+
+.card-stat {
+    border-right: 4px solid #0d6efd;
+}

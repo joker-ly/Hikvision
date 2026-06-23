@@ -1,0 +1,46 @@
+@model DeviceConfig
+@{
+    ViewData["Title"] = "إعدادات الجهاز";
+}
+<h2 class="mb-3">إعدادات جهاز Hikvision</h2>
+
+<form asp-action="Device" method="post" class="mb-3" style="max-width:600px;">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="row">
+        <div class="col-md-8 mb-3">
+            <label asp-for="Host" class="form-label"></label>
+            <input asp-for="Host" class="form-control" />
+            <span asp-validation-for="Host" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Port" class="form-label"></label>
+            <input asp-for="Port" type="number" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Username" class="form-label"></label>
+        <input asp-for="Username" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" type="password" class="form-control" />
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="UseHttps" class="form-check-input" />
+        <label asp-for="UseHttps" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-primary">حفظ</button>
+</form>
+
+<form asp-action="TestConnection" method="post">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-outline-info">اختبار الاتصال بالجهاز</button>
+</form>
+
+@if (Model.LastSyncTime is not null)
+{
+    <p class="text-muted mt-3">آخر مزامنة ناجحة: @Model.LastSyncTime?.ToString("yyyy-MM-dd HH:mm")</p>
+}
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

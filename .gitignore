@@ -1,0 +1,29 @@
+## .NET build output
+bin/
+obj/
+out/
+
+## Visual Studio / Rider
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+## SQLite local files (if used for quick tests)
+*.db
+*.db-shm
+*.db-wal
+
+## User-specific secrets / local overrides
+appsettings.*.local.json
+secrets.json
+
+## OS files
+.DS_Store
+Thumbs.db

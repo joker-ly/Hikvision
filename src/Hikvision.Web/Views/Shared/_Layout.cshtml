@@ -1,0 +1,64 @@
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - نظام الحضور والمرتبات</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">نظام الحضور والمرتبات</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="nav">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">الرئيسية</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Groups" asp-action="Index">المجموعات</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Schedules" asp-action="Index">مواعيد الدوام</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Employees" asp-action="Index">الموظفون</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Attendance" asp-action="Index">سجلات الحضور</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="ManualAttendance" asp-action="Create">إدخال يدوي</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Sync" asp-action="Index">المزامنة</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Reports" asp-action="Payroll">تقرير المرتبات</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Settings" asp-action="Device">الإعدادات</a></li>
+                        </ul>
+                        <ul class="navbar-nav">
+                            <li class="nav-item d-flex align-items-center text-light ms-2">@(User.FindFirstValue("DisplayName") ?? User.Identity?.Name)</li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-light">خروج</button>
+                                </form>
+                            </li>
+                        </ul>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container py-4">
+        @if (TempData["Success"] is string ok)
+        {
+            <div class="alert alert-success alert-dismissible fade show">@ok<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        }
+        @if (TempData["Error"] is string err)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">@err<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        }
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

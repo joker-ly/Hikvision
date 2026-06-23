@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "المزامنة مع الجهاز";
+    var last = ViewBag.LastSync as SyncLog;
+    var defFrom = (DateTime)ViewBag.DefaultFrom;
+    var defTo = (DateTime)ViewBag.DefaultTo;
+}
+<h2 class="mb-3">المزامنة مع الجهاز</h2>
+
+<div class="card shadow-sm mb-4" style="max-width:650px;">
+    <div class="card-body">
+        <form asp-action="Run" method="post" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">من</label>
+                <input type="datetime-local" name="from" value="@defFrom.ToString("yyyy-MM-ddTHH:mm")" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">إلى</label>
+                <input type="datetime-local" name="to" value="@defTo.ToString("yyyy-MM-ddTHH:mm")" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">مزامنة الآن</button>
+            </div>
+        </form>
+        <div class="form-text mt-2">تُسحب بصمات الحضور من الجهاز عبر ISAPI وتُضاف السجلات الجديدة فقط (يُتخطى المكرر).</div>
+    </div>
+</div>
+
+<h5>آخر عملية مزامنة</h5>
+@if (last is null)
+{
+    <p class="text-muted">لم تُجرَ أي مزامنة بعد.</p>
+}
+else
+{
+    <table class="table table-bordered" style="max-width:650px;">
+        <tr><th>الحالة</th><td>@(last.Success ? "نجحت" : "فشلت")</td></tr>
+        <tr><th>الفترة</th><td>@last.FromTime.ToString("yyyy-MM-dd HH:mm") — @last.ToTime.ToString("yyyy-MM-dd HH:mm")</td></tr>
+        <tr><th>مسحوب</th><td>@last.FetchedCount</td></tr>
+        <tr><th>مُدخل</th><td>@last.InsertedCount</td></tr>
+        <tr><th>مكرر (تم تخطيه)</th><td>@last.SkippedDuplicateCount</td></tr>
+        <tr><th>غير مطابَق</th><td>@last.UnmatchedEmployeeCount</td></tr>
+        @if (!last.Success && last.ErrorMessage is not null)
+        {
+            <tr><th>الخطأ</th><td class="text-danger">@last.ErrorMessage</td></tr>
+        }
+    </table>
+}

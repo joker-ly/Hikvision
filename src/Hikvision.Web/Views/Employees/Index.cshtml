@@ -1,0 +1,41 @@
+@model IEnumerable<Employee>
+@{
+    ViewData["Title"] = "الموظفون";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>الموظفون</h2>
+    <a asp-action="Create" class="btn btn-primary">+ إضافة موظف</a>
+</div>
+
+<table class="table table-striped table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>الاسم</th>
+            <th>رقم الجهاز</th>
+            <th>المجموعة</th>
+            <th>الراتب الأساسي</th>
+            <th>نشط</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var e in Model)
+        {
+            <tr>
+                <td>@e.FullName</td>
+                <td>@e.DeviceEmployeeNo</td>
+                <td>@e.Group?.Name</td>
+                <td>@(e.BaseSalary?.ToString("N2") ?? "—")</td>
+                <td>@(e.IsActive ? "نعم" : "لا")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary">تعديل</a>
+                    <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info">السجلات</a>
+                    <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline" onsubmit="return confirm('تأكيد حذف الموظف؟');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,83 @@
+@model WorkSchedule
+@{
+    ViewData["Title"] = "تعديل مواعيد الدوام";
+    var isTimeBound = (bool)(ViewBag.IsTimeBound ?? true);
+    var days = new[] { "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت" };
+}
+<h2>مواعيد الدوام — @ViewBag.GroupName</h2>
+
+@if (!isTimeBound)
+{
+    <div class="alert alert-info">هذه المجموعة غير مقيّدة بوقت (تكفي بصمة الدخول). يمكن ترك أوقات الحضور والانصراف فارغة.</div>
+}
+
+<form asp-action="Edit" method="post" class="mt-3" style="max-width:650px;">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="EmployeeGroupId" />
+    <input type="hidden" asp-for="WorkDaysMask" id="WorkDaysMask" />
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="StartTime" class="form-label"></label>
+            <input asp-for="StartTime" type="time" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="EndTime" class="form-label"></label>
+            <input asp-for="EndTime" type="time" class="form-control" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="LateGraceMinutes" class="form-label"></label>
+            <input asp-for="LateGraceMinutes" type="number" class="form-control" />
+            <div class="form-text">الدخول قبل الموعد مقبول دائمًا. التأخير يُحتسب بعد هذه المهلة.</div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="RequiredDailyHours" class="form-label"></label>
+            <input asp-for="RequiredDailyHours" type="number" step="0.5" class="form-control" />
+            <div class="form-text">تُستخدم عند الاحتساب بعدد ساعات العمل.</div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">أيام العمل</label>
+        <div>
+            @for (int i = 0; i < 7; i++)
+            {
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input day-check" type="checkbox" value="@i" id="day@i" />
+                    <label class="form-check-label" for="day@i">@days[i]</label>
+                </div>
+            }
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">حفظ</button>
+    <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var maskInput = document.getElementById('WorkDaysMask');
+            var checks = document.querySelectorAll('.day-check');
+            function refreshFromMask() {
+                var mask = parseInt(maskInput.value || '0', 10);
+                checks.forEach(function (c) {
+                    var bit = 1 << parseInt(c.value, 10);
+                    c.checked = (mask & bit) !== 0;
+                });
+            }
+            function recompute() {
+                var mask = 0;
+                checks.forEach(function (c) { if (c.checked) mask |= (1 << parseInt(c.value, 10)); });
+                maskInput.value = mask;
+            }
+            checks.forEach(function (c) { c.addEventListener('change', recompute); });
+            refreshFromMask();
+        })();
+    </script>
+}

@@ -1,0 +1,55 @@
+@model Hikvision.Web.ViewModels.Home.DashboardViewModel
+@{
+    ViewData["Title"] = "الرئيسية";
+}
+
+<h2 class="mb-4">لوحة التحكم</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm"><div class="card-body">
+            <div class="text-muted">الموظفون</div>
+            <div class="fs-3 fw-bold">@Model.EmployeeCount</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm"><div class="card-body">
+            <div class="text-muted">المجموعات</div>
+            <div class="fs-3 fw-bold">@Model.GroupCount</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm"><div class="card-body">
+            <div class="text-muted">إجمالي السجلات</div>
+            <div class="fs-3 fw-bold">@Model.AttendanceRecordCount</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm"><div class="card-body">
+            <div class="text-muted">سجلات اليوم</div>
+            <div class="fs-3 fw-bold">@Model.TodayRecordCount</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">آخر مزامنة مع الجهاز</div>
+    <div class="card-body">
+        @if (Model.LastSync is null)
+        {
+            <p class="text-muted mb-0">لم تُجرَ أي مزامنة بعد. <a asp-controller="Sync" asp-action="Index">ابدأ المزامنة الآن</a>.</p>
+        }
+        else
+        {
+            <ul class="mb-0">
+                <li>الحالة: @(Model.LastSync.Success ? "نجحت" : "فشلت")</li>
+                <li>الفترة: @Model.LastSync.FromTime.ToString("yyyy-MM-dd HH:mm") إلى @Model.LastSync.ToTime.ToString("yyyy-MM-dd HH:mm")</li>
+                <li>مُدخل: @Model.LastSync.InsertedCount — مكرر: @Model.LastSync.SkippedDuplicateCount — غير مطابَق: @Model.LastSync.UnmatchedEmployeeCount</li>
+                @if (!Model.LastSync.Success && Model.LastSync.ErrorMessage is not null)
+                {
+                    <li class="text-danger">الخطأ: @Model.LastSync.ErrorMessage</li>
+                }
+            </ul>
+        }
+    </div>
+</div>

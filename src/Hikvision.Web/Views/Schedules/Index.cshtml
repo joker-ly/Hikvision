@@ -1,0 +1,33 @@
+@model IEnumerable<EmployeeGroup>
+@{
+    ViewData["Title"] = "مواعيد الدوام";
+}
+<h2 class="mb-3">مواعيد الدوام لكل مجموعة</h2>
+
+<table class="table table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>المجموعة</th>
+            <th>مقيّد بوقت</th>
+            <th>الحضور</th>
+            <th>الانصراف</th>
+            <th>سماح التأخير</th>
+            <th>ساعات مطلوبة</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var g in Model)
+        {
+            <tr>
+                <td>@g.Name</td>
+                <td>@(g.IsTimeBound ? "نعم" : "لا")</td>
+                <td>@(g.Schedule?.StartTime?.ToString("HH:mm") ?? "—")</td>
+                <td>@(g.Schedule?.EndTime?.ToString("HH:mm") ?? "—")</td>
+                <td>@(g.Schedule?.LateGraceMinutes ?? 0) دقيقة</td>
+                <td>@(g.Schedule?.RequiredDailyHours?.ToString() ?? "—")</td>
+                <td><a asp-action="Edit" asp-route-groupId="@g.Id" class="btn btn-sm btn-outline-primary">تعديل</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

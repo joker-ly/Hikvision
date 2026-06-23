@@ -1,0 +1,32 @@
+@model EmployeeGroup
+@{
+    ViewData["Title"] = "إضافة مجموعة";
+}
+<h2>إضافة مجموعة توظيف</h2>
+
+<form asp-action="Create" method="post" class="mt-3" style="max-width:600px;">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsTimeBound" class="form-check-input" />
+        <label asp-for="IsTimeBound" class="form-check-label"></label>
+        <div class="form-text">إذا أُلغيت، تكفي بصمة دخول واحدة (مثل المدراء).</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="CalculationMode" class="form-label"></label>
+        <select asp-for="CalculationMode" asp-items="Html.GetEnumSelectList<CalculationMode>()" class="form-select"></select>
+        <div class="form-text">خيار قابل للتبديل بين الاحتساب بالأوقات أو بعدد ساعات العمل.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">حفظ</button>
+    <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

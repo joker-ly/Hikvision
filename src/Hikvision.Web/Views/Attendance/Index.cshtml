@@ -1,0 +1,94 @@
+@model IEnumerable<AttendanceRecord>
+@{
+    ViewData["Title"] = "سجلات الحضور";
+
+    string DirText(PunchDirection d) => d switch
+    {
+        PunchDirection.CheckIn => "دخول",
+        PunchDirection.CheckOut => "خروج",
+        PunchDirection.BreakOut => "بداية استراحة",
+        PunchDirection.BreakIn => "نهاية استراحة",
+        _ => "—"
+    };
+    string ManualText(ManualAttendanceType t) => t switch
+    {
+        ManualAttendanceType.WorkMission => "مهمة عمل",
+        ManualAttendanceType.Leave => "إجازة",
+        ManualAttendanceType.PermittedExit => "خروج بإذن",
+        ManualAttendanceType.TaskDone => "إنجاز عمل",
+        _ => "—"
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>سجلات الحضور</h2>
+    <a asp-controller="ManualAttendance" asp-action="Create" class="btn btn-success">+ إدخال يدوي</a>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label">الموظف</label>
+        <select name="employeeId" asp-items="ViewBag.Employees" class="form-select">
+            <option value="">الكل</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">من</label>
+        <input type="date" name="from" value="@(((DateOnly?)ViewBag.From)?.ToString("yyyy-MM-dd"))" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">إلى</label>
+        <input type="date" name="to" value="@(((DateOnly?)ViewBag.To)?.ToString("yyyy-MM-dd"))" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">المصدر</label>
+        @{ var srcStr = ((object?)ViewBag.Source)?.ToString(); }
+        <select name="source" class="form-select">
+            <option value="">الكل</option>
+            <option value="Device" selected="@(srcStr == "Device")">جهاز</option>
+            <option value="Manual" selected="@(srcStr == "Manual")">يدوي</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">تصفية</button>
+    </div>
+</form>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>الموظف</th>
+            <th>الوقت</th>
+            <th>المصدر</th>
+            <th>الاتجاه</th>
+            <th>النوع اليدوي</th>
+            <th>ملاحظة</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.Employee?.FullName</td>
+                <td>@r.EventTime.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    @if (r.Source == AttendanceSource.Manual)
+                    {
+                        <span class="badge badge-manual">يدوي</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-device">جهاز</span>
+                    }
+                </td>
+                <td>@DirText(r.Direction)</td>
+                <td>@(r.Source == AttendanceSource.Manual ? ManualText(r.ManualType) : "—")</td>
+                <td>@r.Note</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (!Model.Any())
+{
+    <p class="text-muted">لا توجد سجلات ضمن المعايير المحددة.</p>
+}
