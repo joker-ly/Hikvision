@@ -41,14 +41,15 @@ public class HikvisionIsapiClient : IHikvisionIsapiClient
 
     private HttpClient CreateClient(DeviceConfig cfg)
     {
-        var handler = new HttpClientHandler
+        var inner = new HttpClientHandler
         {
-            Credentials = new NetworkCredential(cfg.Username, cfg.Password),
-            PreAuthenticate = true,
             // أجهزة LAN تستخدم غالبًا شهادات ذاتية التوقيع
             ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
         };
-        var client = new HttpClient(handler, disposeHandler: true)
+        // مصادقة Digest يدوية لتعمل مع طلبات POST (سحب الأحداث)
+        var digest = new DigestAuthHandler(cfg.Username, cfg.Password) { InnerHandler = inner };
+
+        var client = new HttpClient(digest, disposeHandler: true)
         {
             BaseAddress = new Uri(cfg.BaseUrl),
             Timeout = TimeSpan.FromSeconds(_config.GetValue("Device:TimeoutSeconds", 30))
