@@ -1,27 +1,28 @@
 @model Hikvision.Web.ViewModels.Home.DashboardViewModel
 @using Hikvision.Web.ViewModels.Home
 @{
-    ViewData["Title"] = "الرئيسية";
+    ViewData["Title"] = "لوحة التحكم";
 
-    void RenderCard(string title, string color, List<DashboardEmpRow> rows)
+    void RenderCard(string title, string color, string icon, List<DashboardEmpRow> rows)
     {
-        <div class="card shadow-sm mb-3">
-            <div class="card-header bg-@color text-white d-flex justify-content-between">
-                <span>@title</span><span class="badge bg-light text-dark">@rows.Count</span>
+        <div class="card table-card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi @icon text-@color"></i> @title</span>
+                <span class="badge bg-@color">@rows.Count</span>
             </div>
             @if (rows.Count == 0)
             {
-                <div class="card-body text-muted">لا يوجد</div>
+                <div class="card-body text-muted small">لا يوجد</div>
             }
             else
             {
                 <div class="table-responsive" style="max-height:340px;overflow:auto">
-                    <table class="table table-sm table-striped mb-0">
+                    <table class="table table-sm table-hover mb-0">
                         <thead><tr><th>الموظف</th><th>المجموعة</th><th>تفاصيل</th></tr></thead>
                         <tbody>
                             @foreach (var r in rows)
                             {
-                                <tr><td>@r.Name</td><td>@r.GroupName</td><td>@r.Detail</td></tr>
+                                <tr><td>@r.Name</td><td>@r.GroupName</td><td class="text-muted small">@r.Detail</td></tr>
                             }
                         </tbody>
                     </table>
@@ -29,48 +30,40 @@
             }
         </div>
     }
+
+    void StatCard(string label, int value, string soft, string icon)
+    {
+        <div class="col-md-3 col-6">
+            <div class="card stat-card">
+                <div class="stat-icon @soft"><i class="bi @icon"></i></div>
+                <div>
+                    <div class="stat-label">@label</div>
+                    <div class="stat-value">@value</div>
+                </div>
+            </div>
+        </div>
+    }
 }
 
-<h2 class="mb-1">لوحة التحكم</h2>
 <p class="text-muted">تقارير يوم @Model.Today.ToString("yyyy-MM-dd")</p>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6">
-        <div class="card card-stat shadow-sm"><div class="card-body">
-            <div class="text-muted">إجمالي الموظفين</div>
-            <div class="fs-3 fw-bold">@Model.EmployeeCount</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 col-6">
-        <div class="card shadow-sm border-success"><div class="card-body">
-            <div class="text-muted">الحاضرون اليوم</div>
-            <div class="fs-3 fw-bold text-success">@Model.PresentToday.Count</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 col-6">
-        <div class="card shadow-sm border-danger"><div class="card-body">
-            <div class="text-muted">المتغيبون اليوم</div>
-            <div class="fs-3 fw-bold text-danger">@Model.AbsentToday.Count</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 col-6">
-        <div class="card shadow-sm border-warning"><div class="card-body">
-            <div class="text-muted">المتأخرون اليوم</div>
-            <div class="fs-3 fw-bold text-warning">@Model.LateToday.Count</div>
-        </div></div>
-    </div>
+    @{ StatCard("إجمالي الموظفين", Model.EmployeeCount, "bg-soft-primary", "bi-people"); }
+    @{ StatCard("الحاضرون اليوم", Model.PresentToday.Count, "bg-soft-success", "bi-check2-circle"); }
+    @{ StatCard("المتغيبون اليوم", Model.AbsentToday.Count, "bg-soft-danger", "bi-x-circle"); }
+    @{ StatCard("المتأخرون اليوم", Model.LateToday.Count, "bg-soft-warning", "bi-alarm"); }
 </div>
 
 <div class="row">
-    <div class="col-lg-6">@{ RenderCard("الحاضرون اليوم", "success", Model.PresentToday); }</div>
-    <div class="col-lg-6">@{ RenderCard("المتغيبون اليوم", "danger", Model.AbsentToday); }</div>
-    <div class="col-lg-6">@{ RenderCard("المتأخرون اليوم", "warning", Model.LateToday); }</div>
-    <div class="col-lg-6">@{ RenderCard("ما زالوا بالداخل (دخول دون خروج)", "info", Model.StillInside); }</div>
-    <div class="col-lg-12">@{ RenderCard("موظفون بلا أي سجل خلال 30 يومًا", "secondary", Model.NoRecord30Days); }</div>
+    <div class="col-lg-6">@{ RenderCard("الحاضرون اليوم", "success", "bi-check2-circle", Model.PresentToday); }</div>
+    <div class="col-lg-6">@{ RenderCard("المتغيبون اليوم", "danger", "bi-x-circle", Model.AbsentToday); }</div>
+    <div class="col-lg-6">@{ RenderCard("المتأخرون اليوم", "warning", "bi-alarm", Model.LateToday); }</div>
+    <div class="col-lg-6">@{ RenderCard("ما زالوا بالداخل (دخول دون خروج)", "info", "bi-door-open", Model.StillInside); }</div>
+    <div class="col-lg-12">@{ RenderCard("موظفون بلا أي سجل خلال 30 يومًا", "secondary", "bi-person-dash", Model.NoRecord30Days); }</div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-header">آخر مزامنة مع الجهاز</div>
+<div class="card">
+    <div class="card-header"><i class="bi bi-arrow-repeat"></i> آخر مزامنة مع الجهاز</div>
     <div class="card-body">
         @if (Model.LastSync is null)
         {
@@ -86,3 +79,4 @@
         }
     </div>
 </div>
+

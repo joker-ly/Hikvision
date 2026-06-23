@@ -4,7 +4,7 @@
 }
 <h2 class="mb-3">تقرير الحضور والمرتبات</h2>
 
-<form method="get" class="row g-2 align-items-end mb-3">
+<form method="get" class="row g-2 align-items-end mb-3 card card-body">
     <div class="col-md-3">
         <label class="form-label">المجموعة</label>
         <select name="groupId" asp-items="ViewBag.Groups" class="form-select">
@@ -22,14 +22,16 @@
     <div class="col-md-3">
         <button type="submit" class="btn btn-primary">عرض</button>
         <a class="btn btn-outline-success"
-           asp-action="ExportCsv" asp-route-groupId="@Model.GroupId" asp-route-from="@Model.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.To.ToString("yyyy-MM-dd")">CSV</a>
+           asp-action="ExportCsv" asp-route-groupId="@Model.GroupId" asp-route-from="@Model.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.To.ToString("yyyy-MM-dd")"><i class="bi bi-filetype-csv"></i> CSV</a>
         <a class="btn btn-outline-success"
-           asp-action="ExportXlsx" asp-route-groupId="@Model.GroupId" asp-route-from="@Model.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.To.ToString("yyyy-MM-dd")">Excel</a>
+           asp-action="ExportXlsx" asp-route-groupId="@Model.GroupId" asp-route-from="@Model.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.To.ToString("yyyy-MM-dd")"><i class="bi bi-file-earmark-excel"></i> Excel</a>
     </div>
 </form>
 
-<table class="table table-striped table-bordered">
-    <thead class="table-light">
+<div class="card table-card">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+    <thead>
         <tr>
             <th>الموظف</th>
             <th>المجموعة</th>
@@ -67,7 +69,9 @@
         }
     </tbody>
 </table>
+</div>
+</div>
 @if (!Model.Rows.Any())
 {
-    <p class="text-muted">لا توجد بيانات للفترة المحددة.</p>
+    <p class="text-muted mt-2">لا توجد بيانات للفترة المحددة.</p>
 }

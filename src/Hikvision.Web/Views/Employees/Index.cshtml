@@ -35,8 +35,10 @@
     </div>
 </div>
 
-<table class="table table-striped table-bordered">
-    <thead class="table-light">
+<div class="card table-card">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+    <thead>
         <tr>
             <th>الاسم</th>
             <th>رقم الجهاز</th>
@@ -51,19 +53,21 @@
         {
             <tr>
                 <td>@e.FullName</td>
-                <td>@e.DeviceEmployeeNo</td>
+                <td><span class="badge bg-soft-secondary">@e.DeviceEmployeeNo</span></td>
                 <td>@e.Group?.Name</td>
                 <td>@(e.BaseSalary?.ToString("N2") ?? "—")</td>
-                <td>@(e.IsActive ? "نعم" : "لا")</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary">تعديل</a>
-                    <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info">السجلات</a>
+                <td>@(e.IsActive ? Html.Raw("<span class='badge bg-soft-success'>نعم</span>") : Html.Raw("<span class='badge bg-soft-danger'>لا</span>"))</td>
+                <td class="page-actions">
+                    <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                    <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info"><i class="bi bi-card-checklist"></i></a>
                     <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline" onsubmit="return confirm('تأكيد حذف الموظف؟');">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                     </form>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+</div>
+</div>

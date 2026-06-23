@@ -25,7 +25,7 @@
     <a asp-controller="ManualAttendance" asp-action="Create" class="btn btn-success">+ إدخال يدوي</a>
 </div>
 
-<form method="get" class="row g-2 align-items-end mb-3">
+<form method="get" class="row g-2 align-items-end mb-3 card card-body">
     <div class="col-md-3">
         <label class="form-label">الموظف</label>
         <select name="employeeId" asp-items="ViewBag.Employees" class="form-select">
@@ -54,8 +54,10 @@
     </div>
 </form>
 
-<table class="table table-sm table-striped table-bordered">
-    <thead class="table-light">
+<div class="card table-card">
+<div class="table-responsive">
+<table class="table table-sm table-hover align-middle mb-0">
+    <thead>
         <tr>
             <th>الموظف</th>
             <th>الوقت</th>
@@ -88,7 +90,9 @@
         }
     </tbody>
 </table>
+</div>
+</div>
 @if (!Model.Any())
 {
-    <p class="text-muted">لا توجد سجلات ضمن المعايير المحددة.</p>
+    <p class="text-muted mt-2">لا توجد سجلات ضمن المعايير المحددة.</p>
 }

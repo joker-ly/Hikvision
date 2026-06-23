@@ -3,28 +3,34 @@
     ViewData["Title"] = "تسجيل الدخول";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm mt-5">
-            <div class="card-header bg-primary text-white text-center">تسجيل الدخول</div>
-            <div class="card-body">
-                <form asp-action="Login" method="post">
-                    <input type="hidden" asp-for="ReturnUrl" />
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <div class="mb-3">
-                        <label asp-for="Username" class="form-label"></label>
-                        <input asp-for="Username" class="form-control" autofocus />
-                        <span asp-validation-for="Username" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" />
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">دخول</button>
-                </form>
+<div class="auth-card">
+    <div class="auth-head">
+        <i class="bi bi-fingerprint"></i>
+        <h1>نظام الحضور والمرتبات</h1>
+        <p class="text-muted mb-0">سجّل الدخول للمتابعة</p>
+    </div>
+    <div class="auth-body">
+        <form asp-action="Login" method="post">
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label"></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input asp-for="Username" class="form-control" autofocus />
+                </div>
+                <span asp-validation-for="Username" class="text-danger"></span>
             </div>
-        </div>
+            <div class="mb-4">
+                <label asp-for="Password" class="form-label"></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input asp-for="Password" class="form-control" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2"><i class="bi bi-box-arrow-in-left"></i> دخول</button>
+        </form>
     </div>
 </div>
 
