@@ -77,6 +77,7 @@ public class AttendanceSyncService : IAttendanceSyncService
 
             var toAdd = new List<AttendanceRecord>();
             var unmatchedNumbers = new Dictionary<string, int>();
+            var noPerson = new List<NoPersonEvent>();
 
             await foreach (var ev in _client.GetEventsAsync(startOff, endOff, ct))
             {
@@ -86,6 +87,10 @@ public class AttendanceSyncService : IAttendanceSyncService
                 if (string.IsNullOrWhiteSpace(ev.EmployeeNoString))
                 {
                     result.NoPersonCount++;
+                    if (noPerson.Count < 50000)
+                        noPerson.Add(new NoPersonEvent(
+                            ev.Time, ev.Major, ev.Minor, ev.CurrentVerifyMode,
+                            ev.CardNo, ev.Name, ev.AttendanceStatus));
                     continue;
                 }
 
@@ -143,6 +148,10 @@ public class AttendanceSyncService : IAttendanceSyncService
                 result.UnmatchedLogFile = WriteUnmatchedLog(unmatchedNumbers, result);
             }
 
+            // ملف سجل الأحداث بلا شخص (لفهم طبيعتها)
+            if (noPerson.Count > 0)
+                result.NoPersonLogFile = WriteNoPersonLog(noPerson, result);
+
             log.Success = true;
             log.FetchedCount = result.FetchedCount;
             log.InsertedCount = result.InsertedCount;
@@ -195,6 +204,65 @@ public class AttendanceSyncService : IAttendanceSyncService
             return null;
         }
     }
+
+    /// <summary>حدث بلا شخص، يُلتقط لكتابته في ملف السجل.</summary>
+    private record NoPersonEvent(string? Time, int Major, int Minor, string? VerifyMode,
+        string? CardNo, string? Name, string? AttendanceStatus);
+
+    /// <summary>يكتب ملف CSV بالأحداث بلا شخص مع ملخّص حسب نوع الحدث، ويعيد اسم الملف.</summary>
+    private string? WriteNoPersonLog(List<NoPersonEvent> events, SyncResult result)
+    {
+        try
+        {
+            var dir = Path.Combine(_env.ContentRootPath, "logs");
+            Directory.CreateDirectory(dir);
+            var fileName = $"noperson-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+            var path = Path.Combine(dir, fileName);
+
+            var sb = new StringBuilder();
+            sb.Append('﻿'); // BOM
+            sb.AppendLine($"# مزامنة {result.FromTime:yyyy-MM-dd HH:mm} - {result.ToTime:yyyy-MM-dd HH:mm}");
+            sb.AppendLine($"# إجمالي الأحداث بلا شخص: {result.NoPersonCount}");
+            sb.AppendLine("#");
+            sb.AppendLine("# ملخّص حسب نوع الحدث (major/minor):");
+            foreach (var g in events.GroupBy(e => (e.Major, e.Minor)).OrderByDescending(g => g.Count()))
+                sb.AppendLine($"# major={g.Key.Major} minor={g.Key.Minor} ({DescribeMinor(g.Key.Minor)}) = {g.Count()}");
+            sb.AppendLine();
+            sb.AppendLine("الوقت,major,minor,نوع الحدث,نمط التحقق,رقم البطاقة,الاسم,حالة الحضور");
+            foreach (var e in events)
+                sb.AppendLine(string.Join(",",
+                    Csv(e.Time), e.Major, e.Minor, Csv(DescribeMinor(e.Minor)),
+                    Csv(e.VerifyMode), Csv(e.CardNo), Csv(e.Name), Csv(e.AttendanceStatus)));
+
+            File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
+            return fileName;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "تعذّر كتابة ملف سجل الأحداث بلا شخص");
+            return null;
+        }
+    }
+
+    private static string Csv(string? v)
+    {
+        v ??= string.Empty;
+        return v.Contains(',') || v.Contains('"') ? $"\"{v.Replace("\"", "\"\"")}\"" : v;
+    }
+
+    /// <summary>وصف مختصر لأكثر رموز minor شيوعًا في أحداث التحكم بالدخول.</summary>
+    private static string DescribeMinor(int minor) => minor switch
+    {
+        1 => "تحقق بطاقة ناجح",
+        2 => "بطاقة غير موجودة",
+        38 => "تعرّف وجه ناجح",
+        75 => "محاولة فاشلة",
+        21 => "فتح الباب",
+        22 => "إغلاق الباب",
+        23 => "بقاء الباب مفتوحًا",
+        199 => "فتح بالزر",
+        _ => "غير معروف"
+    };
 
     private bool TryParseEventTime(string? raw, out DateTime localTime)
     {

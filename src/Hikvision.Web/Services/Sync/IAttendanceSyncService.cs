@@ -16,6 +16,8 @@ public class SyncResult
     public List<string> UnmatchedNumbers { get; set; } = new();
     /// <summary>اسم ملف السجل (CSV) الذي يسرد كل الأرقام غير المسجّلة، إن وُجد.</summary>
     public string? UnmatchedLogFile { get; set; }
+    /// <summary>اسم ملف السجل (CSV) الذي يسرد الأحداث بلا شخص، إن وُجد.</summary>
+    public string? NoPersonLogFile { get; set; }
     public DateTime FromTime { get; set; }
     public DateTime ToTime { get; set; }
 }

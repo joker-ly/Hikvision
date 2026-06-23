@@ -28,11 +28,12 @@ public class SyncController : Controller
             ?? _clock.Now.AddDays(-7);
         ViewBag.DefaultTo = _clock.Now;
 
-        // قائمة ملفات سجل الأرقام غير المسجّلة (الأحدث أولًا)
+        // قائمة ملفات السجل (الأحدث أولًا): أرقام غير مسجّلة + أحداث بلا شخص
         ViewBag.LogFiles = Directory.Exists(LogsDir)
-            ? new DirectoryInfo(LogsDir).GetFiles("unmatched-*.csv")
+            ? new DirectoryInfo(LogsDir).GetFiles("*.csv")
+                .Where(f => f.Name.StartsWith("unmatched-") || f.Name.StartsWith("noperson-"))
                 .OrderByDescending(f => f.CreationTimeUtc)
-                .Take(20)
+                .Take(40)
                 .Select(f => f.Name)
                 .ToList()
             : new List<string>();
@@ -53,8 +54,8 @@ public class SyncController : Controller
                 $"اكتملت المزامنة: مسحوب {result.FetchedCount}، مُدخل {result.InsertedCount}، " +
                 $"مكرر {result.SkippedDuplicateCount}، بلا شخص {result.NoPersonCount}، " +
                 $"أرقام غير مسجّلة {result.UnmatchedEmployeeCount}.";
-            if (result.UnmatchedLogFile is not null)
-                msg += $" تم حفظ ملف بالأرقام غير المسجّلة (logs/{result.UnmatchedLogFile}) — يمكن تنزيله من أسفل الصفحة.";
+            if (result.UnmatchedLogFile is not null || result.NoPersonLogFile is not null)
+                msg += " تم حفظ ملف(ات) سجل قابلة للتنزيل من أسفل الصفحة.";
             TempData["Success"] = msg;
         }
         else
@@ -69,7 +70,8 @@ public class SyncController : Controller
     {
         // حماية من اجتياز المسارات: نسمح فقط باسم ملف بسيط ضمن مجلد logs
         var safeName = Path.GetFileName(name);
-        if (string.IsNullOrWhiteSpace(safeName) || !safeName.StartsWith("unmatched-") || !safeName.EndsWith(".csv"))
+        if (string.IsNullOrWhiteSpace(safeName) || !safeName.EndsWith(".csv") ||
+            !(safeName.StartsWith("unmatched-") || safeName.StartsWith("noperson-")))
             return NotFound();
 
         var path = Path.Combine(LogsDir, safeName);

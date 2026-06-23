@@ -60,11 +60,20 @@ public class AcsEventResult
 
 public class AcsEventInfo
 {
+    [JsonPropertyName("major")]
+    public int Major { get; set; }
+
+    [JsonPropertyName("minor")]
+    public int Minor { get; set; }
+
     [JsonPropertyName("employeeNoString")]
     public string? EmployeeNoString { get; set; }
 
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    [JsonPropertyName("cardNo")]
+    public string? CardNo { get; set; }
 
     [JsonPropertyName("time")]
     public string? Time { get; set; }
