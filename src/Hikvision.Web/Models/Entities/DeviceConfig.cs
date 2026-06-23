@@ -30,6 +30,9 @@ public class DeviceConfig
     [Display(Name = "آخر مزامنة")]
     public DateTime? LastSyncTime { get; set; }
 
+    /// <summary>تاريخ آخر تنفيذ للمزامنة المجدولة (لمنع التكرار والتقاط الموعد الفائت).</summary>
+    public DateTime? LastScheduledSyncDate { get; set; }
+
     /// <summary>الرابط الأساسي للجهاز.</summary>
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string BaseUrl => $"{(UseHttps ? "https" : "http")}://{Host}:{Port}";

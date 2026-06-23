@@ -60,6 +60,32 @@ src/Hikvision.Web/
   Views/             واجهات Razor (RTL عربية)
 ```
 
+## المزامنة الآلية اليومية
+يضبط قسم `Sync` في `appsettings.json` المزامنة المجدولة:
+```json
+"Sync": { "Enabled": true, "DailyTime": "14:30" }
+```
+- تُنفَّذ المزامنة آليًا يوميًا عند الوقت المحدد.
+- إذا كان التطبيق متوقفًا عند الموعد وفُتح بعده، تُنفَّذ المزامنة الفائتة فورًا عند التشغيل (تُسحب كل الأحداث منذ آخر مزامنة).
+
+## التشغيل التلقائي مع ويندوز (كخدمة Windows)
+التطبيق يدعم العمل كخدمة Windows تبدأ مع إقلاع النظام. الخطوات (PowerShell كمسؤول):
+```powershell
+# 1) نشر التطبيق
+dotnet publish src/Hikvision.Web -c Release -o C:\Hikvision\app
+
+# 2) إنشاء الخدمة (تبدأ تلقائيًا مع ويندوز)
+sc.exe create HikvisionAttendance binPath= "C:\Hikvision\app\Hikvision.Web.exe" start= auto
+sc.exe description HikvisionAttendance "نظام الحضور والمرتبات"
+sc.exe start HikvisionAttendance
+```
+لإيقاف/حذف الخدمة:
+```powershell
+sc.exe stop HikvisionAttendance
+sc.exe delete HikvisionAttendance
+```
+> بديل أبسط (بدون خدمة): أنشئ مهمة في "جدولة المهام" (Task Scheduler) بمشغّل "عند بدء تشغيل الكمبيوتر" تشغّل `Hikvision.Web.exe`، أو ضع اختصارًا للملف في مجلد بدء التشغيل (Startup). تشغيله كخدمة هو الأنسب للإنتاج.
+
 ## ملاحظات
 - أوقات الأحداث تُخزَّن بالمنطقة الزمنية المُعدّة في `Localization:TimeZone`.
 - معادلة تقدير الصرف مبدئية (خصم عن أيام الغياب غير المبرّر) — راجِعها وفق سياسة منشأتك.

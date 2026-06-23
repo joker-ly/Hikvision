@@ -112,7 +112,9 @@ CREATE TABLE [AuditLogs] (
     [TimestampLocal] datetime2 NOT NULL
 );
 IF COL_LENGTH(N'[Employees]', N'FinancialNo') IS NULL
-ALTER TABLE [Employees] ADD [FinancialNo] nvarchar(64) NULL;";
+ALTER TABLE [Employees] ADD [FinancialNo] nvarchar(64) NULL;
+IF COL_LENGTH(N'[DeviceConfigs]', N'LastScheduledSyncDate') IS NULL
+ALTER TABLE [DeviceConfigs] ADD [LastScheduledSyncDate] datetime2 NULL;";
         try
         {
             await db.Database.ExecuteSqlRawAsync(sql);

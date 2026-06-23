@@ -13,6 +13,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// دعم التشغيل كخدمة Windows (تبدأ مع إقلاع النظام). لا تأثير على المنصات الأخرى.
+builder.Host.UseWindowsService();
+
 // قاعدة البيانات
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -50,6 +53,9 @@ builder.Services.AddScoped<IAttendanceCalculationService, AttendanceCalculationS
 builder.Services.AddScoped<IPayrollReportService, PayrollReportService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Hikvision.Web.Services.Audit.IAuditLogger, Hikvision.Web.Services.Audit.AuditLogger>();
+
+// المزامنة المجدولة اليومية (خدمة خلفية)
+builder.Services.AddHostedService<Hikvision.Web.Services.Sync.ScheduledSyncService>();
 
 var app = builder.Build();
 

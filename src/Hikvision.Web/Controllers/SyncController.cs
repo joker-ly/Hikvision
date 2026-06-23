@@ -12,13 +12,16 @@ public class SyncController : Controller
     private readonly IAppClock _clock;
     private readonly IHostEnvironment _env;
     private readonly IAuditLogger _audit;
+    private readonly IConfiguration _config;
 
-    public SyncController(IAttendanceSyncService sync, IAppClock clock, IHostEnvironment env, IAuditLogger audit)
+    public SyncController(IAttendanceSyncService sync, IAppClock clock, IHostEnvironment env,
+        IAuditLogger audit, IConfiguration config)
     {
         _sync = sync;
         _clock = clock;
         _env = env;
         _audit = audit;
+        _config = config;
     }
 
     private string LogsDir => Path.Combine(_env.ContentRootPath, "logs");
@@ -26,6 +29,8 @@ public class SyncController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        ViewBag.ScheduleEnabled = _config.GetValue("Sync:Enabled", true);
+        ViewBag.ScheduleTime = _config["Sync:DailyTime"] ?? "14:30";
         ViewBag.LastSync = await _sync.GetLastSyncAsync();
         ViewBag.DefaultFrom = (ViewBag.LastSync as Hikvision.Web.Models.Entities.SyncLog)?.ToTime
             ?? _clock.Now.AddDays(-7);

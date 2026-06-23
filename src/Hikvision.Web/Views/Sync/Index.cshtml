@@ -4,7 +4,21 @@
     var defFrom = (DateTime)ViewBag.DefaultFrom;
     var defTo = (DateTime)ViewBag.DefaultTo;
     var logFiles = ViewBag.LogFiles as List<string> ?? new List<string>();
+    var scheduleEnabled = (bool)(ViewBag.ScheduleEnabled ?? true);
+    var scheduleTime = ViewBag.ScheduleTime as string ?? "14:30";
 }
+
+<div class="alert @(scheduleEnabled ? "alert-info" : "alert-secondary") d-flex align-items-center gap-2">
+    <i class="bi bi-clock"></i>
+    @if (scheduleEnabled)
+    {
+        <span>المزامنة الآلية مفعّلة يوميًا عند الساعة <strong>@scheduleTime</strong>. وإذا كان التطبيق متوقفًا عند الموعد، تُنفَّذ تلقائيًا عند تشغيله لاحقًا.</span>
+    }
+    else
+    {
+        <span>المزامنة الآلية معطّلة. يمكن تفعيلها من إعداد <code>Sync:Enabled</code>.</span>
+    }
+</div>
 <h2 class="mb-3">المزامنة مع الجهاز</h2>
 
 <div class="card shadow-sm mb-4" style="max-width:650px;">
