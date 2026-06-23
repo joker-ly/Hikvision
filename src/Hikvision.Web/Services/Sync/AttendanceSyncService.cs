@@ -54,7 +54,20 @@ public class AttendanceSyncService : IAttendanceSyncService
         {
             // خرائط بحث سريعة
             var employeeByDeviceNo = await _db.Employees
-                .ToDictionaryAsync(e => e.DeviceEmployeeNo, e => e, ct);
+                .AsNoTracking()
+                .Select(e => new { e.Id, e.DeviceEmployeeNo })
+                .ToDictionaryAsync(e => e.DeviceEmployeeNo, e => e.Id, ct);
+
+            // تحميل مفاتيح السجلات الموجودة دفعة واحدة لمنع التكرار في الذاكرة
+            var existing = new HashSet<(int, DateTime, PunchDirection)>(
+                (await _db.AttendanceRecords
+                    .Where(r => r.Source == AttendanceSource.Device &&
+                                r.EventTime >= fromLocal && r.EventTime <= toLocal)
+                    .Select(r => new { r.EmployeeId, r.EventTime, r.Direction })
+                    .ToListAsync(ct))
+                .Select(x => (x.EmployeeId, x.EventTime, x.Direction)));
+
+            var batch = new HashSet<(int, DateTime, PunchDirection)>();
 
             var startOff = _clock.ToOffset(fromLocal);
             var endOff = _clock.ToOffset(toLocal);
@@ -66,7 +79,7 @@ public class AttendanceSyncService : IAttendanceSyncService
                 result.FetchedCount++;
 
                 if (string.IsNullOrWhiteSpace(ev.EmployeeNoString) ||
-                    !employeeByDeviceNo.TryGetValue(ev.EmployeeNoString, out var emp))
+                    !employeeByDeviceNo.TryGetValue(ev.EmployeeNoString, out var empId))
                 {
                     result.UnmatchedEmployeeCount++;
                     continue;
@@ -76,19 +89,10 @@ public class AttendanceSyncService : IAttendanceSyncService
                     continue;
 
                 var direction = MapDirection(ev.AttendanceStatus);
+                var key = (empId, eventLocal, direction);
 
-                // منع التكرار: فحص قاعدة البيانات + الدفعة الحالية
-                var existsInDb = await _db.AttendanceRecords.AnyAsync(r =>
-                    r.EmployeeId == emp.Id &&
-                    r.EventTime == eventLocal &&
-                    r.Direction == direction &&
-                    r.Source == AttendanceSource.Device, ct);
-
-                var existsInBatch = toAdd.Any(r =>
-                    r.EmployeeId == emp.Id && r.EventTime == eventLocal &&
-                    r.Direction == direction && r.Source == AttendanceSource.Device);
-
-                if (existsInDb || existsInBatch)
+                // منع التكرار في الذاكرة (موجود مسبقًا أو ضمن الدفعة الحالية)
+                if (existing.Contains(key) || !batch.Add(key))
                 {
                     result.SkippedDuplicateCount++;
                     continue;
@@ -96,7 +100,7 @@ public class AttendanceSyncService : IAttendanceSyncService
 
                 toAdd.Add(new AttendanceRecord
                 {
-                    EmployeeId = emp.Id,
+                    EmployeeId = empId,
                     EventTime = eventLocal,
                     Source = AttendanceSource.Device,
                     Direction = direction,
