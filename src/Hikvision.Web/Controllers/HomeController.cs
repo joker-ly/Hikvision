@@ -1,4 +1,5 @@
 using Hikvision.Web.Data;
+using Hikvision.Web.Models.Enums;
 using Hikvision.Web.Services.Sync;
 using Hikvision.Web.Services.TimeZoneSupport;
 using Hikvision.Web.ViewModels.Home;
@@ -24,9 +25,11 @@ public class HomeController : Controller
     {
         var today = _clock.Now.Date;
         var tomorrow = today.AddDays(1);
+        var last30 = today.AddDays(-30);
 
         var vm = new DashboardViewModel
         {
+            Today = today,
             EmployeeCount = await _db.Employees.CountAsync(),
             GroupCount = await _db.EmployeeGroups.CountAsync(),
             AttendanceRecordCount = await _db.AttendanceRecords.CountAsync(),
@@ -34,6 +37,67 @@ public class HomeController : Controller
                 .CountAsync(r => r.EventTime >= today && r.EventTime < tomorrow),
             LastSync = await _sync.GetLastSyncAsync()
         };
+
+        // الموظفون النشطون مع مجموعاتهم ووردياتهم
+        var employees = await _db.Employees
+            .Include(e => e.Group!).ThenInclude(g => g.Schedule)
+            .Where(e => e.IsActive)
+            .AsNoTracking().ToListAsync();
+
+        // سجلات اليوم
+        var todayRecords = await _db.AttendanceRecords
+            .Where(r => r.EventTime >= today && r.EventTime < tomorrow)
+            .Select(r => new { r.EmployeeId, r.EventTime, r.Direction })
+            .AsNoTracking().ToListAsync();
+
+        // الموظفون الذين لديهم أي سجل خلال آخر 30 يومًا
+        var recentIds = (await _db.AttendanceRecords
+            .Where(r => r.EventTime >= last30)
+            .Select(r => r.EmployeeId)
+            .Distinct().ToListAsync()).ToHashSet();
+
+        var todayByEmp = todayRecords.GroupBy(r => r.EmployeeId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.EventTime).ToList());
+
+        foreach (var e in employees.OrderBy(e => e.FullName))
+        {
+            var groupName = e.Group?.Name ?? "—";
+            var schedule = e.Group?.Schedule;
+            var isWorkingDay = schedule?.IsWorkingDay(today.DayOfWeek) ?? true;
+
+            if (todayByEmp.TryGetValue(e.Id, out var recs) && recs.Count > 0)
+            {
+                var firstIn = recs.First().EventTime;
+                var lastRec = recs.Last();
+                vm.PresentToday.Add(new DashboardEmpRow(
+                    e.Id, e.FullName, groupName, $"أول حضور {firstIn:HH:mm}"));
+
+                // متأخر: المجموعات المقيّدة بوقت ولها وقت بدء
+                if ((e.Group?.IsTimeBound ?? false) && schedule?.StartTime is { } start)
+                {
+                    var allowed = start.ToTimeSpan().Add(TimeSpan.FromMinutes(schedule.LateGraceMinutes));
+                    if (firstIn.TimeOfDay > allowed)
+                    {
+                        var mins = (int)Math.Round((firstIn.TimeOfDay - allowed).TotalMinutes);
+                        vm.LateToday.Add(new DashboardEmpRow(
+                            e.Id, e.FullName, groupName, $"حضر {firstIn:HH:mm} (متأخر {mins} د)"));
+                    }
+                }
+
+                // ما زال بالداخل: آخر بصمة دخول وليست خروجًا
+                if (lastRec.Direction != PunchDirection.CheckOut)
+                    vm.StillInside.Add(new DashboardEmpRow(
+                        e.Id, e.FullName, groupName, $"آخر حركة {lastRec.EventTime:HH:mm}"));
+            }
+            else if (isWorkingDay)
+            {
+                vm.AbsentToday.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, null));
+            }
+
+            if (!recentIds.Contains(e.Id))
+                vm.NoRecord30Days.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, "لا سجل خلال 30 يومًا"));
+        }
+
         return View(vm);
     }
 
