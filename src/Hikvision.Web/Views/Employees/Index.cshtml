@@ -4,7 +4,17 @@
 }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>الموظفون</h2>
-    <a asp-action="Create" class="btn btn-primary">+ إضافة موظف</a>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-primary">+ إضافة موظف</a>
+        @if (Model.Any())
+        {
+            <form asp-action="DeleteAll" method="post" class="d-inline"
+                  onsubmit="return confirm('سيتم حذف جميع الموظفين وسجلات حضورهم نهائيًا. هل أنت متأكد؟');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">🗑 حذف الكل</button>
+            </form>
+        }
+    </div>
 </div>
 
 <div class="card shadow-sm mb-3">

@@ -160,4 +160,15 @@ public class EmployeesController : Controller
         TempData["Success"] = "تم حذف الموظف.";
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAll()
+    {
+        // تُحذف سجلات الحضور المرتبطة أولًا ثم جميع الموظفين
+        await _db.AttendanceRecords.ExecuteDeleteAsync();
+        var count = await _db.Employees.ExecuteDeleteAsync();
+        TempData["Success"] = $"تم حذف جميع الموظفين ({count}) وسجلات حضورهم. يمكنك الآن إعادة الاستيراد بالتوزيع الصحيح.";
+        return RedirectToAction(nameof(Index));
+    }
 }
