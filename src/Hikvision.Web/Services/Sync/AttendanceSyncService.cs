@@ -73,15 +73,24 @@ public class AttendanceSyncService : IAttendanceSyncService
             var endOff = _clock.ToOffset(toLocal);
 
             var toAdd = new List<AttendanceRecord>();
+            var unmatchedNumbers = new HashSet<string>();
 
             await foreach (var ev in _client.GetEventsAsync(startOff, endOff, ct))
             {
                 result.FetchedCount++;
 
-                if (string.IsNullOrWhiteSpace(ev.EmployeeNoString) ||
-                    !employeeByDeviceNo.TryGetValue(ev.EmployeeNoString, out var empId))
+                // أحداث بلا شخص (فتح باب، أحداث نظام، تعرّف فاشل بلا هوية) — ليست عدم تطابق فعلي
+                if (string.IsNullOrWhiteSpace(ev.EmployeeNoString))
+                {
+                    result.NoPersonCount++;
+                    continue;
+                }
+
+                // رقم موجود على الجهاز لكنه غير مسجّل لدينا كموظف
+                if (!employeeByDeviceNo.TryGetValue(ev.EmployeeNoString, out var empId))
                 {
                     result.UnmatchedEmployeeCount++;
+                    unmatchedNumbers.Add(ev.EmployeeNoString);
                     continue;
                 }
 
@@ -118,6 +127,15 @@ public class AttendanceSyncService : IAttendanceSyncService
 
             if (cfg is not null)
                 cfg.LastSyncTime = toLocal;
+
+            // حفظ عيّنة من الأرقام غير المطابَقة للمراجعة + تسجيلها في سجل التطبيق
+            result.UnmatchedNumbers = unmatchedNumbers.OrderBy(x => x).Take(100).ToList();
+            if (unmatchedNumbers.Count > 0)
+            {
+                _logger.LogWarning(
+                    "مزامنة: {Count} رقم جهاز غير مسجّل كموظف. الأرقام: {Numbers}",
+                    unmatchedNumbers.Count, string.Join(", ", result.UnmatchedNumbers));
+            }
 
             log.Success = true;
             log.FetchedCount = result.FetchedCount;

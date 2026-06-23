@@ -10,6 +10,10 @@ public class SyncResult
     public int InsertedCount { get; set; }
     public int SkippedDuplicateCount { get; set; }
     public int UnmatchedEmployeeCount { get; set; }
+    /// <summary>أحداث بلا شخص (فتح باب/أحداث نظام) — ليست عدم تطابق فعلي.</summary>
+    public int NoPersonCount { get; set; }
+    /// <summary>عيّنة من أرقام الأجهزة التي لم تطابق أي موظف (للمراجعة).</summary>
+    public List<string> UnmatchedNumbers { get; set; } = new();
     public DateTime FromTime { get; set; }
     public DateTime ToTime { get; set; }
 }

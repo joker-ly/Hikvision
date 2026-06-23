@@ -35,9 +35,13 @@ public class SyncController : Controller
 
         if (result.Success)
         {
-            TempData["Success"] =
+            var msg =
                 $"اكتملت المزامنة: مسحوب {result.FetchedCount}، مُدخل {result.InsertedCount}، " +
-                $"مكرر {result.SkippedDuplicateCount}، غير مطابَق {result.UnmatchedEmployeeCount}.";
+                $"مكرر {result.SkippedDuplicateCount}، بلا شخص {result.NoPersonCount}، " +
+                $"أرقام غير مسجّلة {result.UnmatchedEmployeeCount}.";
+            if (result.UnmatchedNumbers.Count > 0)
+                msg += " الأرقام غير المسجّلة: " + string.Join("، ", result.UnmatchedNumbers);
+            TempData["Success"] = msg;
         }
         else
         {
