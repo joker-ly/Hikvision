@@ -1,5 +1,7 @@
 namespace Hikvision.Web.Services.TimeZoneSupport;
 
+using System.Globalization;
+
 /// <summary>
 /// ساعة التطبيق التي تتعامل مع المنطقة الزمنية المُعدّة.
 /// كل أوقات الأحداث تُخزَّن وتُعرض بهذه المنطقة.
@@ -24,8 +26,21 @@ public class AppClock : IAppClock
 
     public AppClock(IConfiguration config)
     {
-        var id = config["Localization:TimeZone"] ?? "UTC";
-        TimeZone = ResolveTimeZone(id);
+        // أولوية لإزاحة ثابتة (بلا توقيت صيفي) إن حُدّدت — أضمن مع تقلّب قواعد DST.
+        var fixedOffset = config["Localization:FixedUtcOffsetHours"];
+        if (!string.IsNullOrWhiteSpace(fixedOffset) &&
+            double.TryParse(fixedOffset, NumberStyles.Any, CultureInfo.InvariantCulture, out var hours))
+        {
+            var offset = TimeSpan.FromHours(hours);
+            var label = $"UTC{(hours >= 0 ? "+" : "-")}{Math.Abs(hours):00}:00";
+            // منطقة مخصّصة بإزاحة ثابتة وبلا قواعد توقيت صيفي.
+            TimeZone = TimeZoneInfo.CreateCustomTimeZone(label, offset, label, label);
+        }
+        else
+        {
+            var id = config["Localization:TimeZone"] ?? "UTC";
+            TimeZone = ResolveTimeZone(id);
+        }
     }
 
     public DateTime Now => TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZone).DateTime;
