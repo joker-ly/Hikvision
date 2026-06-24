@@ -77,6 +77,21 @@ public class SyncController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PurgeDevice()
+    {
+        var deleted = await _sync.PurgeDeviceAttendanceAsync();
+
+        await _audit.LogAsync("حذف سجلات الجهاز",
+            $"تم حذف {deleted} سجل حضور آتٍ من الجهاز وتصفير علامة آخر مزامنة.");
+
+        TempData["Success"] =
+            $"تم حذف {deleted} سجل حضور آتٍ من الجهاز (بقيت السجلات اليدوية والموظفون). " +
+            "تم تصفير علامة آخر مزامنة — لإعادة سحب كامل التاريخ حدّد حقل \"من\" بتاريخ قديم مناسب ثم اضغط \"مزامنة الآن\".";
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpGet]
     public IActionResult DownloadLog(string name)
     {

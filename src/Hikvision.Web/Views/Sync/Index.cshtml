@@ -40,6 +40,22 @@
     </div>
 </div>
 
+<div class="card shadow-sm mb-4 border-danger" style="max-width:650px;">
+    <div class="card-body">
+        <h6 class="card-title text-danger">حذف سجلات الجهاز وإعادة الضبط</h6>
+        <p class="form-text mb-3">
+            يحذف جميع سجلات الحضور الآتية من البصمة فقط ويُصفّر علامة آخر مزامنة لإعادة السحب من جديد.
+            <strong>تبقى السجلات اليدوية والموظفون كما هم.</strong>
+            بعد الحذف حدّد حقل "من" بتاريخ قديم مناسب ثم اضغط "مزامنة الآن" لإعادة سحب كامل التاريخ.
+        </p>
+        <form asp-action="PurgeDevice" method="post"
+              onsubmit="return confirm('سيتم حذف جميع سجلات الحضور الآتية من الجهاز نهائيًا (تبقى السجلات اليدوية والموظفون). ثم أعد المزامنة. هل أنت متأكد؟');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-danger">🗑 حذف سجلات الجهاز وإعادة الضبط</button>
+        </form>
+    </div>
+</div>
+
 <h5>آخر عملية مزامنة</h5>
 @if (last is null)
 {

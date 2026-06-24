@@ -37,6 +37,24 @@ public class AttendanceSyncService : IAttendanceSyncService
     public Task<SyncLog?> GetLastSyncAsync(CancellationToken ct = default) =>
         _db.SyncLogs.AsNoTracking().OrderByDescending(s => s.Id).FirstOrDefaultAsync(ct);
 
+    public async Task<int> PurgeDeviceAttendanceAsync(CancellationToken ct = default)
+    {
+        // حذف مجمّع لسجلات الجهاز فقط (تبقى السجلات اليدوية كما هي).
+        var deleted = await _db.AttendanceRecords
+            .Where(r => r.Source == AttendanceSource.Device)
+            .ExecuteDeleteAsync(ct);
+
+        // تصفير علامة آخر مزامنة حتى تُعاد المزامنة من البداية بدل أن تبدأ من تاريخ متأخر.
+        var cfg = await _db.DeviceConfigs.FirstOrDefaultAsync(ct);
+        if (cfg is not null)
+        {
+            cfg.LastSyncTime = null;
+            await _db.SaveChangesAsync(ct);
+        }
+
+        return deleted;
+    }
+
     public async Task<SyncResult> RunAsync(DateTime? from, DateTime? to, int? userId, CancellationToken ct = default)
     {
         var cfg = await _db.DeviceConfigs.FirstOrDefaultAsync(ct);

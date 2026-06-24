@@ -31,4 +31,11 @@ public interface IAttendanceSyncService
     Task<SyncResult> RunAsync(DateTime? from, DateTime? to, int? userId, CancellationToken ct = default);
 
     Task<SyncLog?> GetLastSyncAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// حذف جميع سجلات الحضور الآتية من الجهاز (Source=Device) وتصفير علامة آخر مزامنة
+    /// لإتاحة إعادة السحب من جديد. لا يمسّ السجلات اليدوية ولا الموظفين.
+    /// يُعيد عدد السجلات المحذوفة.
+    /// </summary>
+    Task<int> PurgeDeviceAttendanceAsync(CancellationToken ct = default);
 }
