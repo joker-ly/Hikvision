@@ -38,7 +38,7 @@
             {
                 <li class="page-item"><a class="page-link" asp-route-page="@(page-1)">السابق</a></li>
             }
-            <li class="page-item disabled"><span class="page-link">@page / @totalPages</span></li>
+            <li class="page-item disabled"><span class="page-link">@(page) / @totalPages</span></li>
             @if (page < totalPages)
             {
                 <li class="page-item"><a class="page-link" asp-route-page="@(page+1)">التالي</a></li>
