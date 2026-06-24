@@ -4,8 +4,10 @@ using Hikvision.Web.Data;
 using Hikvision.Web.Models.Entities;
 using Hikvision.Web.Models.Enums;
 using Hikvision.Web.Services.Hikvision;
+using Hikvision.Web.Services.Hikvision.Dtos;
 using Hikvision.Web.Services.TimeZoneSupport;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Hikvision.Web.Services.Sync;
 
@@ -13,17 +15,19 @@ public class AttendanceSyncService : IAttendanceSyncService
 {
     private readonly AppDbContext _db;
     private readonly IHikvisionIsapiClient _client;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _config;
     private readonly IAppClock _clock;
     private readonly IHostEnvironment _env;
     private readonly ILogger<AttendanceSyncService> _logger;
 
     public AttendanceSyncService(
-        AppDbContext db, IHikvisionIsapiClient client, IConfiguration config,
-        IAppClock clock, IHostEnvironment env, ILogger<AttendanceSyncService> logger)
+        AppDbContext db, IHikvisionIsapiClient client, IServiceScopeFactory scopeFactory,
+        IConfiguration config, IAppClock clock, IHostEnvironment env, ILogger<AttendanceSyncService> logger)
     {
         _db = db;
         _client = client;
+        _scopeFactory = scopeFactory;
         _config = config;
         _clock = clock;
         _env = env;
@@ -82,7 +86,10 @@ public class AttendanceSyncService : IAttendanceSyncService
             // لا نكتب لها ملف سجل إلا عند تفعيله صراحةً للتشخيص.
             var writeNoPersonLog = _config.GetValue("Device:WriteNoPersonLog", false);
 
-            await foreach (var ev in _client.GetEventsAsync(startOff, endOff, ct))
+            // سحب الأحداث (متوازٍ على نطاقات فرعية لأقصى سرعة)، ثم معالجتها في الذاكرة
+            var allEvents = await FetchAllEventsAsync(startOff, endOff, ct);
+
+            foreach (var ev in allEvents)
             {
                 result.FetchedCount++;
 
@@ -178,6 +185,51 @@ public class AttendanceSyncService : IAttendanceSyncService
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// يسحب كل أحداث الفترة. عند ضبط Device:SyncParallelism > 1 يقسّم الفترة إلى نطاقات
+    /// فرعية متتالية غير متداخلة ويسحبها بالتوازي (كل نطاق بنطاق DI مستقل لتجنّب تشارك DbContext).
+    /// </summary>
+    private async Task<List<AcsEventInfo>> FetchAllEventsAsync(
+        DateTimeOffset start, DateTimeOffset end, CancellationToken ct)
+    {
+        var parallelism = Math.Clamp(_config.GetValue("Device:SyncParallelism", 4), 1, 16);
+
+        // مسار متسلسل بسيط (السلوك الأصلي)
+        if (parallelism <= 1 || end <= start)
+        {
+            var list = new List<AcsEventInfo>();
+            await foreach (var ev in _client.GetEventsAsync(start, end, ct))
+                list.Add(ev);
+            return list;
+        }
+
+        // تقسيم الفترة إلى نطاقات متتالية (بدقة الثانية، بلا تداخل ولا فجوات)
+        var ranges = new List<(DateTimeOffset s, DateTimeOffset e)>();
+        var totalTicks = (end - start).Ticks;
+        var chunkTicks = totalTicks / parallelism;
+        for (int i = 0; i < parallelism; i++)
+        {
+            var s = start + TimeSpan.FromTicks(chunkTicks * i);
+            var e = (i == parallelism - 1)
+                ? end
+                : start + TimeSpan.FromTicks(chunkTicks * (i + 1)) - TimeSpan.FromSeconds(1);
+            if (s <= e) ranges.Add((s, e));
+        }
+
+        var tasks = ranges.Select(async r =>
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var client = scope.ServiceProvider.GetRequiredService<IHikvisionIsapiClient>();
+            var list = new List<AcsEventInfo>();
+            await foreach (var ev in client.GetEventsAsync(r.s, r.e, ct))
+                list.Add(ev);
+            return list;
+        }).ToList();
+
+        var results = await Task.WhenAll(tasks);
+        return results.SelectMany(x => x).ToList();
     }
 
     /// <summary>يكتب ملف CSV بالأرقام غير المسجّلة وعدد أحداث كل رقم، ويعيد اسم الملف.</summary>
