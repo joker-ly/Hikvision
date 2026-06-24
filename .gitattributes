@@ -1,0 +1,6 @@
+# سكربتات ويندوز يجب أن تبقى بنهايات أسطر CRLF وإلا تنغلق نافذة cmd فورًا
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# سكربتات الصدفة تبقى بنهايات LF
+*.sh text eol=lf
