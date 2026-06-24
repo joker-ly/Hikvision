@@ -1,52 +1,59 @@
 @echo off
-chcp 65001 >nul
-REM ============================================================
-REM  تثبيت البرنامج كخدمة Windows تعمل تلقائيًا عند إقلاع النظام
-REM  + فتح المنفذ في جدار الحماية للوصول من أجهزة الشبكة المحلية.
-REM  *** يجب تشغيله كمسؤول (Run as administrator) ***
-REM ============================================================
-setlocal
+setlocal EnableExtensions
 
-REM --- عدّل هذه القيم إن لزم ---
-set APPDIR=C:\HikvisionApp
-set SVCNAME=HikvisionAttendance
-set PORT=5005
-REM ------------------------------
+REM ------- Settings (edit if needed) -------
+set "APPDIR=C:\HikvisionApp"
+set "SVCNAME=HikvisionAttendance"
+set "PORT=5005"
+REM -----------------------------------------
+set "EXE=%APPDIR%\Hikvision.Web.exe"
 
-set EXE=%APPDIR%\Hikvision.Web.exe
+echo ============================================================
+echo   Hikvision Attendance - Install as Windows Service
+echo ============================================================
+echo.
 
+REM --- Must run as Administrator ---
 net session >nul 2>&1
-if errorlevel 1 (
-    echo شغّل هذا الملف كمسؤول: انقر بزر الفأرة الأيمن ثم "Run as administrator".
-    pause
-    exit /b 1
+if %errorlevel% neq 0 (
+    echo [ERROR] This script must be run as Administrator.
+    echo         Right-click the file and choose "Run as administrator".
+    goto :end
 )
 
+REM --- Executable must exist ---
 if not exist "%EXE%" (
-    echo لم يُعثر على الملف التنفيذي: %EXE%
-    echo انسخ مخرجات النشر (مجلد publish) إلى %APPDIR% أولًا.
-    pause
-    exit /b 1
+    echo [ERROR] Executable not found:
+    echo         %EXE%
+    echo         Copy the published output ^(deploy\publish^) into %APPDIR% first.
+    goto :end
 )
 
-echo === فتح المنفذ %PORT% في جدار الحماية (للشبكة المحلية) ===
+echo [1/3] Opening firewall port %PORT% for the local network...
 netsh advfirewall firewall delete rule name="Hikvision Attendance %PORT%" >nul 2>&1
 netsh advfirewall firewall add rule name="Hikvision Attendance %PORT%" dir=in action=allow protocol=TCP localport=%PORT%
+echo.
 
-echo === إنشاء خدمة ويندوز تبدأ تلقائيًا مع النظام ===
+echo [2/3] Creating Windows service "%SVCNAME%" (automatic start)...
 sc stop %SVCNAME% >nul 2>&1
 sc delete %SVCNAME% >nul 2>&1
 sc create %SVCNAME% binPath= "\"%EXE%\"" start= auto DisplayName= "Hikvision Attendance"
-sc description %SVCNAME% "نظام حضور ورواتب Hikvision"
-REM إعادة تشغيل الخدمة تلقائيًا عند أي تعطّل
+sc description %SVCNAME% "Hikvision Attendance and Payroll System"
 sc failure %SVCNAME% reset= 86400 actions= restart/5000/restart/5000/restart/5000
-sc start %SVCNAME%
+echo.
 
+echo [3/3] Starting the service...
+sc start %SVCNAME%
 echo.
-echo تم التثبيت بنجاح.
-echo افتح من نفس الجهاز:   http://localhost:%PORT%
-echo ومن أجهزة الشبكة:     http://[عنوان-IP-للجهاز]:%PORT%
-echo (لمعرفة عنوان IP نفّذ الأمر:  ipconfig )
+
+echo ============================================================
+echo   Done.
+echo   Local:   http://localhost:%PORT%
+echo   Network: http://[THIS-PC-IP]:%PORT%   (run ipconfig to find IP)
+echo ============================================================
+
+:end
 echo.
-pause
+echo Press any key to close this window...
+pause >nul
 endlocal

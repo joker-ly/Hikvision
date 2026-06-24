@@ -1,35 +1,36 @@
 @echo off
-chcp 65001 >nul
-REM ============================================================
-REM  نشر البرنامج كملف تنفيذي واحد لويندوز (64-bit) بدون الحاجة
-REM  لتثبيت .NET على الجهاز الهدف (self-contained single file).
-REM  شغّل هذا الملف على جهاز فيه .NET 8 SDK.
-REM ============================================================
-setlocal
-set ROOT=%~dp0..
-set OUT=%~dp0publish
+setlocal EnableExtensions
 
-echo === نشر Hikvision Attendance (win-x64, self-contained) ===
-dotnet publish "%ROOT%\src\Hikvision.Web\Hikvision.Web.csproj" ^
-    -c Release ^
-    -r win-x64 ^
-    --self-contained true ^
-    -p:PublishSingleFile=true ^
-    -p:IncludeNativeLibrariesForSelfExtract=true ^
-    -p:EnableCompressionInSingleFile=true ^
-    -o "%OUT%"
+echo ============================================================
+echo   Publish Hikvision Attendance as a single Windows .exe
+echo ============================================================
+echo.
 
-if errorlevel 1 (
+set "ROOT=%~dp0.."
+set "OUT=%~dp0publish"
+
+where dotnet >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] .NET SDK ^(dotnet^) was not found on this machine.
+    echo         Install .NET 8 SDK first: https://dotnet.microsoft.com/download
+    goto :end
+)
+
+echo Publishing ^(win-x64, self-contained, single file^)...
+echo.
+dotnet publish "%ROOT%\src\Hikvision.Web\Hikvision.Web.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o "%OUT%"
+if %errorlevel% neq 0 (
     echo.
-    echo *** فشل النشر ***
-    pause
-    exit /b 1
+    echo [ERROR] Publish failed. See the messages above.
+    goto :end
 )
 
 echo.
-echo تم النشر بنجاح.
-echo الملف التنفيذي:  %OUT%\Hikvision.Web.exe
-echo انسخ كامل محتويات المجلد "%OUT%" إلى جهاز ويندوز (مثلًا C:\HikvisionApp).
+echo Done. Executable: %OUT%\Hikvision.Web.exe
+echo Copy the whole "publish" folder to the Windows machine ^(e.g. C:\HikvisionApp^).
+
+:end
 echo.
-pause
+echo Press any key to close this window...
+pause >nul
 endlocal
