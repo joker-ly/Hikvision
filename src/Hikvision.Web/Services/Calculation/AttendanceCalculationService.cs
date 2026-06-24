@@ -75,6 +75,14 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                 continue;
             }
 
+            // 2) عطلة نهاية الأسبوع (يوم غير عمل): تُحتسب حضورًا للجميع
+            if (!res.IsWorkingDay)
+            {
+                res.IsPresent = true;
+                results.Add(res);
+                continue;
+            }
+
             // 2) السجلات اليدوية
             var manual = dayRecords
                 .Where(r => r.Source == AttendanceSource.Manual && r.ManualType != ManualAttendanceType.None)
