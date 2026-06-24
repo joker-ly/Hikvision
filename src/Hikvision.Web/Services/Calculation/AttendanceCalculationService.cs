@@ -61,7 +61,9 @@ public class AttendanceCalculationService : IAttendanceCalculationService
             var res = new DailyAttendanceResult
             {
                 Date = day,
-                IsWorkingDay = schedule?.IsWorkingDay(day.DayOfWeek) ?? true
+                // عند غياب الوردية نعتبر الجمعة والسبت عطلة افتراضيًا (لا تُحتسب غيابًا)
+                IsWorkingDay = schedule?.IsWorkingDay(day.DayOfWeek)
+                    ?? (day.DayOfWeek != DayOfWeek.Friday && day.DayOfWeek != DayOfWeek.Saturday)
             };
 
             // 1) الإجازات الرسمية المعمّمة: حضور للجميع
