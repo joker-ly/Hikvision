@@ -24,6 +24,10 @@ artifacts/
 appsettings.*.local.json
 secrets.json
 
+## ملف إعداد الاتصال الذي يكتبه معالج الإعداد (خاص بكل جهاز وقد يحوي كلمة مرور)
+db-settings.json
+**/db-settings.json
+
 ## Generated sync log files
 **/logs/
 

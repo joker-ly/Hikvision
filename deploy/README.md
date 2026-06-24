@@ -4,18 +4,21 @@
 المحلية، ويبدأ تلقائيًا عند إقلاع النظام.
 
 ## المتطلب الوحيد على جهاز التشغيل: قاعدة بيانات SQL Server
-البرنامج يستخدم **SQL Server** (سلسلة الاتصال في `appsettings.json`:
-`Server=localhost;Database=HikvisionAttendance;Trusted_Connection=True`).
+البرنامج يستخدم **SQL Server**. ثبّت **SQL Server Express** (مجاني) على جهاز ويندوز إن لم
+يكن موجودًا. **لا حاجة لتعديل `appsettings.json` يدويًا** — عند أول تشغيل يظهر **معالج إعداد**
+في المتصفح:
 
-- ثبّت **SQL Server Express** (مجاني) على جهاز ويندوز إن لم يكن موجودًا.
-- **الجداول تُنشأ تلقائيًا** عند أول تشغيل (ترحيلات EF Core) — لا حاجة لإنشاء يدوي.
-- إن كانت النسخة باسم `SQLEXPRESS`، عدّل سلسلة الاتصال إلى:
-  `Server=localhost\SQLEXPRESS;Database=HikvisionAttendance;Trusted_Connection=True;TrustServerCertificate=True`
-- بما أن الخدمة تعمل افتراضيًا بحساب `NT AUTHORITY\SYSTEM`، تأكد أن لهذا الحساب
-  صلاحية دخول على SQL Server (أو استخدم مصادقة SQL في سلسلة الاتصال:
-  `Server=localhost;Database=HikvisionAttendance;User Id=sa;Password=كلمتك;TrustServerCertificate=True`).
+1. افتح `http://localhost:5005` — سيُحوّلك تلقائيًا إلى صفحة **إعداد قاعدة البيانات**.
+2. أدخل **اسم الخادم** (مثل `localhost` أو `localhost\SQLEXPRESS` أو `192.168.1.10`)
+   واسم القاعدة (الافتراضي `HikvisionAttendance`)، واختر مصادقة ويندوز أو حساب SQL.
+3. اضغط **اختبار الاتصال** للتأكد، ثم **حفظ ومتابعة**.
+4. تُنشأ القاعدة والجداول تلقائيًا، ويُحفظ الإعداد في ملف `db-settings.json` بجوار الـ exe،
+   ثم تنتقل لتسجيل الدخول.
 
-> ملاحظة: لا حاجة لتثبيت .NET على جهاز التشغيل — النشر مضمّن (self-contained).
+> ملاحظات:
+> - الخدمة تعمل افتراضيًا بحساب `NT AUTHORITY\SYSTEM`؛ تأكد أن له صلاحية على SQL Server،
+>   أو استخدم مصادقة SQL (اسم مستخدم/كلمة مرور) في المعالج.
+> - لا حاجة لتثبيت .NET على جهاز التشغيل — النشر مضمّن (self-contained).
 
 ---
 
@@ -30,9 +33,10 @@ deploy\publish.bat
 
 ### 2) النقل والإعداد على جهاز ويندوز
 1. انسخ **كامل** محتويات `deploy\publish` إلى مجلد على الجهاز، مثلًا `C:\HikvisionApp`.
-2. افتح `C:\HikvisionApp\appsettings.json` وعدّل:
-   - `ConnectionStrings:DefaultConnection` بحسب SQL Server لديك.
-   - `Device:Host/Username/Password` ببيانات جهاز البصمة.
+2. **قاعدة البيانات تُضبط من معالج الإعداد في المتصفح** (انظر القسم أعلاه) — لا حاجة لتعديل
+   سلسلة الاتصال يدويًا.
+3. (اختياري) في `appsettings.json` يمكن تعديل إعدادات أخرى:
+   - `Device:Host/Username/Password` ببيانات جهاز البصمة (أو من صفحة الإعدادات داخل البرنامج).
    - `Localization:TimeZone` (مثلًا `Africa/Cairo`).
    - `Admin:Username/Password` لحساب المدير الأول.
    - `Urls` لتغيير المنفذ إن رغبت (الافتراضي `http://0.0.0.0:5005`؛

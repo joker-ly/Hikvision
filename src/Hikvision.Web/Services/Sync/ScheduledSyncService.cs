@@ -15,13 +15,16 @@ public class ScheduledSyncService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _config;
     private readonly ILogger<ScheduledSyncService> _logger;
+    private readonly Hikvision.Web.Services.Setup.DbConnectionStringProvider _dbProvider;
 
     public ScheduledSyncService(
-        IServiceScopeFactory scopeFactory, IConfiguration config, ILogger<ScheduledSyncService> logger)
+        IServiceScopeFactory scopeFactory, IConfiguration config, ILogger<ScheduledSyncService> logger,
+        Hikvision.Web.Services.Setup.DbConnectionStringProvider dbProvider)
     {
         _scopeFactory = scopeFactory;
         _config = config;
         _logger = logger;
+        _dbProvider = dbProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,6 +48,10 @@ public class ScheduledSyncService : BackgroundService
 
     private async Task CheckAndRunAsync(CancellationToken ct)
     {
+        // لا تعمل قبل اكتمال إعداد قاعدة البيانات (معالج الإعداد الأول).
+        if (!_dbProvider.IsReady)
+            return;
+
         if (!_config.GetValue("Sync:Enabled", true))
             return;
 

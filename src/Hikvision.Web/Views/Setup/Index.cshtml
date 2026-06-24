@@ -1,0 +1,108 @@
+@model Hikvision.Web.ViewModels.Setup.SetupViewModel
+@{
+    ViewData["Title"] = "إعداد قاعدة البيانات";
+}
+
+<div class="auth-card" style="max-width:520px;">
+    <div class="auth-head">
+        <i class="bi bi-database-gear"></i>
+        <h1>إعداد قاعدة البيانات</h1>
+        <p class="text-muted mb-0">أدخل بيانات خادم SQL Server، اختبر الاتصال، ثم احفظ للمتابعة.</p>
+    </div>
+    <div class="auth-body">
+        @if (TempData["Error"] is string err)
+        {
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> @err</div>
+        }
+        <form asp-action="Save" method="post" id="setupForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="Server" class="form-label"></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-hdd-network"></i></span>
+                    <input asp-for="Server" class="form-control" placeholder="localhost أو localhost\SQLEXPRESS" autofocus />
+                </div>
+                <div class="form-text">أمثلة: <code>localhost</code> ، <code>localhost\SQLEXPRESS</code> ، <code>.\SQLEXPRESS</code> ، <code>192.168.1.10</code></div>
+                <span asp-validation-for="Server" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Database" class="form-label"></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-database"></i></span>
+                    <input asp-for="Database" class="form-control" />
+                </div>
+                <div class="form-text">تُنشأ القاعدة تلقائيًا إن لم تكن موجودة.</div>
+                <span asp-validation-for="Database" class="text-danger"></span>
+            </div>
+
+            <div class="form-check form-switch mb-3">
+                <input asp-for="UseWindowsAuth" class="form-check-input" id="useWinAuth" />
+                <label asp-for="UseWindowsAuth" class="form-check-label"></label>
+            </div>
+
+            <div id="sqlAuthFields" style="display:none;">
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input asp-for="Username" class="form-control" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-key"></i></span>
+                        <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    </div>
+                </div>
+            </div>
+
+            <div id="testResult" class="mb-3"></div>
+
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-outline-secondary" id="btnTest">
+                    <i class="bi bi-plug"></i> اختبار الاتصال
+                </button>
+                <button type="submit" class="btn btn-primary py-2" id="btnSave">
+                    <i class="bi bi-check2-circle"></i> حفظ ومتابعة
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const useWinAuth = document.getElementById('useWinAuth');
+        const sqlFields = document.getElementById('sqlAuthFields');
+        function toggleAuth() { sqlFields.style.display = useWinAuth.checked ? 'none' : 'block'; }
+        useWinAuth.addEventListener('change', toggleAuth);
+        toggleAuth();
+
+        document.getElementById('btnTest').addEventListener('click', async function () {
+            const form = document.getElementById('setupForm');
+            const result = document.getElementById('testResult');
+            const btn = this;
+            btn.disabled = true;
+            result.innerHTML = '<div class="text-muted"><span class="spinner-border spinner-border-sm"></span> جارٍ اختبار الاتصال...</div>';
+            try {
+                const resp = await fetch('@Url.Action("Test", "Setup")', {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+                const data = await resp.json();
+                result.innerHTML = data.ok
+                    ? '<div class="alert alert-success mb-0"><i class="bi bi-check-circle"></i> ' + data.message + '</div>'
+                    : '<div class="alert alert-danger mb-0"><i class="bi bi-x-circle"></i> فشل الاتصال: ' + data.message + '</div>';
+            } catch (e) {
+                result.innerHTML = '<div class="alert alert-danger mb-0">تعذّر إجراء الاختبار: ' + e + '</div>';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+}
