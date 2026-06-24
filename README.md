@@ -89,16 +89,16 @@ sc.exe delete HikvisionAttendance
 ## الوصول للـ API من أجهزة أخرى على الشبكة المحلية
 التطبيق يستمع على كل واجهات الشبكة عبر الإعداد:
 ```json
-"Urls": "http://0.0.0.0:5000"
+"Urls": "http://0.0.0.0:5005"
 ```
 خطوات التفعيل على جهاز الخادم (ويندوز، PowerShell كمسؤول):
 ```powershell
-# فتح المنفذ 5000 في جدار الحماية للوارد
-netsh advfirewall firewall add rule name="Hikvision API" dir=in action=allow protocol=TCP localport=5000
+# فتح المنفذ 5005 في جدار الحماية للوارد
+netsh advfirewall firewall add rule name="Hikvision API" dir=in action=allow protocol=TCP localport=5005
 ```
 ثم من الجهاز الآخر على نفس الشبكة، استبدل localhost بعنوان IP الخاص بجهاز الخادم:
 ```
-http://192.168.95.50:5000/api/payroll/financial?month=3
+http://192.168.95.50:5005/api/payroll/financial?month=3
 ```
 (اعرف IP الخادم بأمر `ipconfig`.)
 
