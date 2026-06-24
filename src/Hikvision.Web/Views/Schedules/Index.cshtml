@@ -13,6 +13,7 @@
             <th>الحضور</th>
             <th>الانصراف</th>
             <th>سماح التأخير</th>
+            <th>سماح الخروج</th>
             <th>ساعات مطلوبة</th>
             <th></th>
         </tr>
@@ -26,6 +27,7 @@
                 <td>@(g.Schedule?.StartTime?.ToString("HH:mm") ?? "—")</td>
                 <td>@(g.Schedule?.EndTime?.ToString("HH:mm") ?? "—")</td>
                 <td>@(g.Schedule?.LateGraceMinutes ?? 0) دقيقة</td>
+                <td>@(g.Schedule?.CheckoutGraceMinutes ?? 0) دقيقة</td>
                 <td>@(g.Schedule?.RequiredDailyHours?.ToString() ?? "—")</td>
                 <td><a asp-action="Edit" asp-route-groupId="@g.Id" class="btn btn-sm btn-outline-primary">تعديل</a></td>
             </tr>

@@ -61,6 +61,7 @@ public class SchedulesController : Controller
             s.StartTime = model.StartTime;
             s.EndTime = model.EndTime;
             s.LateGraceMinutes = model.LateGraceMinutes;
+            s.CheckoutGraceMinutes = model.CheckoutGraceMinutes;
             s.RequiredDailyHours = model.RequiredDailyHours;
             s.WorkDaysMask = model.WorkDaysMask;
         }

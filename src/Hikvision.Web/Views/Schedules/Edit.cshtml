@@ -34,8 +34,15 @@
         <div class="col-md-6 mb-3">
             <label asp-for="LateGraceMinutes" class="form-label"></label>
             <input asp-for="LateGraceMinutes" type="number" class="form-control" />
-            <div class="form-text">الدخول قبل الموعد مقبول دائمًا. التأخير يُحتسب بعد هذه المهلة.</div>
+            <div class="form-text">الحضور حتى (وقت الحضور + هذه المهلة) يُقبل. بعدها يُحتسب تأخيرًا. مثال: حضور 08:00 وسماح 90 يقبل حتى 09:30.</div>
         </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="CheckoutGraceMinutes" class="form-label"></label>
+            <input asp-for="CheckoutGraceMinutes" type="number" class="form-control" />
+            <div class="form-text">البصمة من (وقت الخروج − هذه المهلة) فأكثر تُعتبر خروجًا نظاميًا. مثال: خروج 15:00 وسماح 10 يقبل من 14:50.</div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-md-6 mb-3">
             <label asp-for="RequiredDailyHours" class="form-label"></label>
             <input asp-for="RequiredDailyHours" type="number" step="0.5" class="form-control" />

@@ -25,9 +25,14 @@ public class WorkSchedule
     public TimeOnly? EndTime { get; set; }
 
     /// <summary>دقائق السماح قبل احتساب التأخير.</summary>
-    [Range(0, 240, ErrorMessage = "قيمة غير صحيحة")]
+    [Range(0, 600, ErrorMessage = "قيمة غير صحيحة")]
     [Display(Name = "سماح التأخير (دقائق)")]
     public int LateGraceMinutes { get; set; } = 0;
+
+    /// <summary>دقائق السماح قبل موعد الخروج: البصمة من (الخروج − هذه الدقائق) فأكثر تُعتبر خروجًا نظاميًا.</summary>
+    [Range(0, 600, ErrorMessage = "قيمة غير صحيحة")]
+    [Display(Name = "سماح الخروج المبكر (دقائق)")]
+    public int CheckoutGraceMinutes { get; set; } = 0;
 
     /// <summary>عدد ساعات العمل المطلوبة يوميًا (يُستخدم عند الاحتساب بساعات العمل).</summary>
     [Range(0, 24, ErrorMessage = "قيمة غير صحيحة")]

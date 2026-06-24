@@ -114,7 +114,9 @@ CREATE TABLE [AuditLogs] (
 IF COL_LENGTH(N'[Employees]', N'FinancialNo') IS NULL
 ALTER TABLE [Employees] ADD [FinancialNo] nvarchar(64) NULL;
 IF COL_LENGTH(N'[DeviceConfigs]', N'LastScheduledSyncDate') IS NULL
-ALTER TABLE [DeviceConfigs] ADD [LastScheduledSyncDate] datetime2 NULL;";
+ALTER TABLE [DeviceConfigs] ADD [LastScheduledSyncDate] datetime2 NULL;
+IF COL_LENGTH(N'[WorkSchedules]', N'CheckoutGraceMinutes') IS NULL
+ALTER TABLE [WorkSchedules] ADD [CheckoutGraceMinutes] int NOT NULL CONSTRAINT [DF_WorkSchedules_CheckoutGraceMinutes] DEFAULT 0;";
         try
         {
             await db.Database.ExecuteSqlRawAsync(sql);

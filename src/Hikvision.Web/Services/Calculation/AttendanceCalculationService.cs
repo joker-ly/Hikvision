@@ -176,10 +176,11 @@ public class AttendanceCalculationService : IAttendanceCalculationService
             }
         }
 
-        // الخروج: أي بصمة من موعد الخروج فما بعده تُعتبر خروجًا نظاميًا
+        // الخروج: أي بصمة من (موعد الخروج − سماح الخروج) فما بعده تُعتبر خروجًا نظاميًا
         if (schedule?.EndTime is { } end)
         {
-            var hasProperCheckout = punches.Any(p => p.EventTime.TimeOfDay >= end.ToTimeSpan());
+            var checkoutThreshold = end.ToTimeSpan().Subtract(TimeSpan.FromMinutes(schedule.CheckoutGraceMinutes));
+            var hasProperCheckout = punches.Any(p => p.EventTime.TimeOfDay >= checkoutThreshold);
             if (!hasProperCheckout)
             {
                 res.IsEarlyLeave = true;
