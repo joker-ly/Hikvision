@@ -29,7 +29,7 @@ public class GroupsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Name,Description,IsTimeBound,CalculationMode")] EmployeeGroup model)
+    public async Task<IActionResult> Create([Bind("Name,Description,IsTimeBound,CalculationMode,IsFingerprintExempt")] EmployeeGroup model)
     {
         if (!ModelState.IsValid) return View(model);
 
@@ -59,7 +59,7 @@ public class GroupsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,IsTimeBound,CalculationMode")] EmployeeGroup model)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,IsTimeBound,CalculationMode,IsFingerprintExempt")] EmployeeGroup model)
     {
         if (id != model.Id) return NotFound();
         if (!ModelState.IsValid) return View(model);
@@ -71,6 +71,7 @@ public class GroupsController : Controller
         group.Description = model.Description;
         group.IsTimeBound = model.IsTimeBound;
         group.CalculationMode = model.CalculationMode;
+        group.IsFingerprintExempt = model.IsFingerprintExempt;
 
         await _db.SaveChangesAsync();
         await _audit.LogAsync("تعديل مجموعة", group.Name);

@@ -26,6 +26,11 @@
         <select asp-for="CalculationMode" asp-items="Html.GetEnumSelectList<CalculationMode>()" class="form-select"></select>
         <div class="form-text">خيار قابل للتبديل بين الاحتساب بالأوقات أو بعدد ساعات العمل.</div>
     </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsFingerprintExempt" class="form-check-input" />
+        <label asp-for="IsFingerprintExempt" class="form-check-label"></label>
+        <div class="form-text">عند التفعيل يُحتسب لكل أعضاء المجموعة حضور كامل طوال الفترة (لا غياب ولا تأخير) دون النظر إلى البصمة.</div>
+    </div>
     <button type="submit" class="btn btn-primary">حفظ</button>
     <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
 </form>

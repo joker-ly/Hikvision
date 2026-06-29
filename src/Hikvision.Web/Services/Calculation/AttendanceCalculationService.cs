@@ -66,6 +66,14 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                     ?? (day.DayOfWeek != DayOfWeek.Friday && day.DayOfWeek != DayOfWeek.Saturday)
             };
 
+            // 0) مجموعة معفاة من البصمة: كل يوم يُحتسب حضورًا كاملًا (لا غياب ولا تأخير)
+            if (group.IsFingerprintExempt)
+            {
+                res.IsPresent = true;
+                results.Add(res);
+                continue;
+            }
+
             // 1) الإجازات الرسمية المعمّمة: حضور للجميع
             if (holidays.Contains(day))
             {

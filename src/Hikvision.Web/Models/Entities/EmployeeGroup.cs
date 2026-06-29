@@ -28,6 +28,13 @@ public class EmployeeGroup
     [Display(Name = "طريقة الاحتساب")]
     public CalculationMode CalculationMode { get; set; } = CalculationMode.ByCheckInOut;
 
+    /// <summary>
+    /// معفي من البصمة: عند التفعيل يُحتسب كل أيام الفترة حضورًا كاملًا لأعضاء المجموعة
+    /// (لا غياب ولا تأخير)، دون النظر إلى بصمات الجهاز.
+    /// </summary>
+    [Display(Name = "معفي من البصمة (حضور كامل)")]
+    public bool IsFingerprintExempt { get; set; } = false;
+
     // العلاقات
     public ICollection<Employee> Employees { get; set; } = new List<Employee>();
     public WorkSchedule? Schedule { get; set; }

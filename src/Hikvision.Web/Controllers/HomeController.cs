@@ -65,6 +65,13 @@ public class HomeController : Controller
             var schedule = e.Group?.Schedule;
             var isWorkingDay = schedule?.IsWorkingDay(today.DayOfWeek) ?? true;
 
+            // مجموعة معفاة من البصمة: تُعتبر حاضرة دائمًا (لا غياب ولا تأخير)
+            if (e.Group?.IsFingerprintExempt ?? false)
+            {
+                vm.PresentToday.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, "معفي من البصمة"));
+                continue;
+            }
+
             if (todayByEmp.TryGetValue(e.Id, out var recs) && recs.Count > 0)
             {
                 var firstIn = recs.First().EventTime;
