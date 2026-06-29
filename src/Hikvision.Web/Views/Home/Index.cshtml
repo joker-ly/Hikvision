@@ -59,7 +59,8 @@
     <div class="col-lg-6">@{ RenderCard("المتغيبون اليوم", "danger", "bi-x-circle", Model.AbsentToday); }</div>
     <div class="col-lg-6">@{ RenderCard("المتأخرون اليوم", "warning", "bi-alarm", Model.LateToday); }</div>
     <div class="col-lg-6">@{ RenderCard("ما زالوا بالداخل (دخول دون خروج)", "info", "bi-door-open", Model.StillInside); }</div>
-    <div class="col-lg-12">@{ RenderCard("موظفون بلا أي سجل خلال 30 يومًا", "secondary", "bi-person-dash", Model.NoRecord30Days); }</div>
+    <div class="col-lg-6">@{ RenderCard("الغائبون منذ 15 يومًا (بلا أي سجل)", "warning", "bi-person-dash", Model.NoRecord15Days); }</div>
+    <div class="col-lg-6">@{ RenderCard("الغائبون منذ 30 يومًا (بلا أي سجل)", "secondary", "bi-person-dash", Model.NoRecord30Days); }</div>
 </div>
 
 <div class="card">

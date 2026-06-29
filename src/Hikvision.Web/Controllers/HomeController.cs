@@ -26,6 +26,7 @@ public class HomeController : Controller
         var today = _clock.Now.Date;
         var tomorrow = today.AddDays(1);
         var last30 = today.AddDays(-30);
+        var last15 = today.AddDays(-15);
 
         var vm = new DashboardViewModel
         {
@@ -56,6 +57,12 @@ public class HomeController : Controller
             .Select(r => r.EmployeeId)
             .Distinct().ToListAsync()).ToHashSet();
 
+        // الموظفون الذين لديهم أي سجل خلال آخر 15 يومًا
+        var recentIds15 = (await _db.AttendanceRecords
+            .Where(r => r.EventTime >= last15)
+            .Select(r => r.EmployeeId)
+            .Distinct().ToListAsync()).ToHashSet();
+
         var todayByEmp = todayRecords.GroupBy(r => r.EmployeeId)
             .ToDictionary(g => g.Key, g => g.OrderBy(x => x.EventTime).ToList());
 
@@ -79,8 +86,8 @@ public class HomeController : Controller
                 vm.PresentToday.Add(new DashboardEmpRow(
                     e.Id, e.FullName, groupName, $"أول حضور {firstIn:HH:mm}"));
 
-                // متأخر: المجموعات المقيّدة بوقت ولها وقت بدء
-                if ((e.Group?.IsTimeBound ?? false) && schedule?.StartTime is { } start)
+                // متأخر: يُحتسب كلما وُجد وقت حضور محدّد في الوردية
+                if (schedule?.StartTime is { } start)
                 {
                     var allowed = start.ToTimeSpan().Add(TimeSpan.FromMinutes(schedule.LateGraceMinutes));
                     if (firstIn.TimeOfDay > allowed)
@@ -105,6 +112,9 @@ public class HomeController : Controller
 
             if (!recentIds.Contains(e.Id))
                 vm.NoRecord30Days.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, "لا سجل خلال 30 يومًا"));
+
+            if (!recentIds15.Contains(e.Id))
+                vm.NoRecord15Days.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, "لا سجل خلال 15 يومًا"));
         }
 
         return View(vm);

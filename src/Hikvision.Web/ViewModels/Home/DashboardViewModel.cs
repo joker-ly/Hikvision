@@ -16,6 +16,7 @@ public class DashboardViewModel
     public List<DashboardEmpRow> AbsentToday { get; set; } = new();
     public List<DashboardEmpRow> LateToday { get; set; } = new();
     public List<DashboardEmpRow> StillInside { get; set; } = new();
+    public List<DashboardEmpRow> NoRecord15Days { get; set; } = new();
     public List<DashboardEmpRow> NoRecord30Days { get; set; } = new();
 
     public DateTime Today { get; set; }
