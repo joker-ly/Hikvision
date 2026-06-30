@@ -70,10 +70,16 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                     ?? (day.DayOfWeek != DayOfWeek.Friday && day.DayOfWeek != DayOfWeek.Saturday)
             };
 
-            // 0) مجموعة معفاة من البصمة: كل يوم يُحتسب حضورًا كاملًا (لا غياب ولا تأخير)
+            // 0) مجموعة معفاة من البصمة: كل يوم يُحتسب حضورًا كاملًا،
+            //    إلا أيام الإجازة بدون مرتب فتُخصم حتى للمعفيين.
             if (group.IsFingerprintExempt)
             {
-                res.IsPresent = true;
+                var hasUnpaid = dayRecords.Any(r =>
+                    r.Source == AttendanceSource.Manual && r.ManualType == ManualAttendanceType.UnpaidLeave);
+                if (hasUnpaid)
+                    res.IsUnpaidLeave = true;
+                else
+                    res.IsPresent = true;
                 results.Add(res);
                 continue;
             }
