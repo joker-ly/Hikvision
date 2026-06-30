@@ -29,5 +29,9 @@ public enum ManualAttendanceType
 
     /// <summary>إعفاء من تاريخ معيّن: لا يُحتسب أي حضور بعده.</summary>
     [Display(Name = "إعفاء")]
-    Exemption = 5
+    Exemption = 5,
+
+    /// <summary>إجازة بدون مرتب: يوم لا يُحتسب حضورًا ويُخصم من الصرف.</summary>
+    [Display(Name = "إجازة بدون مرتب")]
+    UnpaidLeave = 6
 }

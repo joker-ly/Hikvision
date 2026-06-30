@@ -24,11 +24,18 @@ public class EmployeesController : Controller
     private async Task PopulateGroups(int? selected = null)
         => ViewBag.Groups = new SelectList(await _db.EmployeeGroups.AsNoTracking().ToListAsync(), "Id", "Name", selected);
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? sort)
     {
-        var employees = await _db.Employees
-            .Include(e => e.Group)
-            .AsNoTracking().OrderBy(e => e.FullName).ToListAsync();
+        var query = _db.Employees.Include(e => e.Group).AsNoTracking();
+        query = sort switch
+        {
+            "name_desc" => query.OrderByDescending(e => e.FullName),
+            "financial" => query.OrderBy(e => e.FinancialNo),
+            "financial_desc" => query.OrderByDescending(e => e.FinancialNo),
+            _ => query.OrderBy(e => e.FullName)
+        };
+        var employees = await query.ToListAsync();
+        ViewBag.Sort = sort ?? "name";
         await PopulateGroups();
         return View(employees);
     }

@@ -18,6 +18,7 @@
         <label asp-for="ManualType" class="form-label"></label>
         <select asp-for="ManualType" class="form-select" id="manualType">
             <option value="@((int)ManualAttendanceType.Leave)">إجازة</option>
+            <option value="@((int)ManualAttendanceType.UnpaidLeave)">إجازة بدون مرتب (خصم)</option>
             <option value="@((int)ManualAttendanceType.WorkMission)">مهمة عمل</option>
             <option value="@((int)ManualAttendanceType.TaskDone)">إنجاز عمل</option>
             <option value="@((int)ManualAttendanceType.PermittedExit)">خروج بإذن (مغادرة مبكرة)</option>

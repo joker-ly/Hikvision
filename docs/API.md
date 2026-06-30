@@ -75,6 +75,7 @@ curl -H "X-Api-Key: مفتاحك" \
       "daysPresent": 22,
       "daysAbsent": 1,
       "daysLeave": 0,
+      "daysUnpaidLeave": 2,
       "workMissionDays": 0,
       "earlyExitPermissionCount": 1,
       "holidayDays": 8,
@@ -97,7 +98,8 @@ curl -H "X-Api-Key: مفتاحك" \
 | `groupName` | اسم المجموعة/القروب |
 | `daysPresent` | أيام الحضور (تشمل الإجازات والعطل والمهام المحتسبة) |
 | `daysAbsent` | أيام الغياب |
-| `daysLeave` | أيام الإجازة |
+| `daysLeave` | أيام الإجازة (مدفوعة) |
+| `daysUnpaidLeave` | أيام إجازة بدون مرتب (تُخصم من الصرف) |
 | `workMissionDays` | أيام المأموريات |
 | `earlyExitPermissionCount` | عدد أذونات الخروج المبكر |
 | `holidayDays` | أيام العطل الرسمية ضمن الفترة |

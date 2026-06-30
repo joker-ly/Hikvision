@@ -49,6 +49,7 @@ public class PayrollReportService : IPayrollReportService
 
             var workingDays = days.Count(d => d.IsWorkingDay);
             var absentDays = days.Count(d => d.IsAbsent);
+            var unpaidLeaveDays = days.Count(d => d.IsUnpaidLeave);
 
             var row = new PayrollRow
             {
@@ -59,6 +60,7 @@ public class PayrollReportService : IPayrollReportService
                 DaysPresent = days.Count(d => d.IsPresent),
                 DaysAbsent = absentDays,
                 DaysLeave = days.Count(d => d.ManualTypeApplied == ManualAttendanceType.Leave),
+                DaysUnpaidLeave = unpaidLeaveDays,
                 WorkMissionDays = days.Count(d => d.ManualTypeApplied == ManualAttendanceType.WorkMission),
                 EarlyExitPermissionCount = days.Count(d => d.HasPermittedExit),
                 HolidayDays = days.Count(d => d.IsHoliday),
@@ -68,11 +70,12 @@ public class PayrollReportService : IPayrollReportService
                 BaseSalary = emp.BaseSalary
             };
 
-            // تقدير مبدئي للصرف: خصم عن أيام الغياب غير المبرّر
+            // تقدير مبدئي للصرف: خصم عن أيام الغياب غير المبرّر + الإجازات بدون مرتب
             if (emp.BaseSalary is { } salary && workingDays > 0)
             {
                 var perDay = salary / workingDays;
-                row.EstimatedPay = Math.Round(Math.Max(0, salary - perDay * absentDays), 2);
+                var deductDays = absentDays + unpaidLeaveDays;
+                row.EstimatedPay = Math.Round(Math.Max(0, salary - perDay * deductDays), 2);
             }
             else
             {
@@ -98,6 +101,7 @@ public class PayrollReportService : IPayrollReportService
             csv.WriteField("أيام الحضور");
             csv.WriteField("أيام الغياب");
             csv.WriteField("أيام الإجازة");
+            csv.WriteField("إجازة بدون مرتب");
             csv.WriteField("أيام مهام العمل");
             csv.WriteField("أذونات الخروج المبكر");
             csv.WriteField("أيام العطل الرسمية");
@@ -115,6 +119,7 @@ public class PayrollReportService : IPayrollReportService
                 csv.WriteField(r.DaysPresent);
                 csv.WriteField(r.DaysAbsent);
                 csv.WriteField(r.DaysLeave);
+                csv.WriteField(r.DaysUnpaidLeave);
                 csv.WriteField(r.WorkMissionDays);
                 csv.WriteField(r.EarlyExitPermissionCount);
                 csv.WriteField(r.HolidayDays);
@@ -136,7 +141,7 @@ public class PayrollReportService : IPayrollReportService
         ws.RightToLeft = true;
 
         string[] headers = { "الموظف", "المجموعة", "أيام الحضور", "أيام الغياب", "أيام الإجازة",
-            "أيام مهام العمل", "أذونات الخروج المبكر", "أيام العطل الرسمية",
+            "إجازة بدون مرتب", "أيام مهام العمل", "أذونات الخروج المبكر", "أيام العطل الرسمية",
             "مرات التأخير", "دقائق التأخير", "إجمالي ساعات العمل", "الراتب الأساسي", "تقدير الصرف" };
         for (int i = 0; i < headers.Length; i++)
             ws.Cell(1, i + 1).Value = headers[i];
@@ -150,14 +155,15 @@ public class PayrollReportService : IPayrollReportService
             ws.Cell(row, 3).Value = r.DaysPresent;
             ws.Cell(row, 4).Value = r.DaysAbsent;
             ws.Cell(row, 5).Value = r.DaysLeave;
-            ws.Cell(row, 6).Value = r.WorkMissionDays;
-            ws.Cell(row, 7).Value = r.EarlyExitPermissionCount;
-            ws.Cell(row, 8).Value = r.HolidayDays;
-            ws.Cell(row, 9).Value = r.LateCount;
-            ws.Cell(row, 10).Value = r.TotalLateMinutes;
-            ws.Cell(row, 11).Value = r.TotalWorkedHours;
-            if (r.BaseSalary.HasValue) ws.Cell(row, 12).Value = r.BaseSalary.Value;
-            if (r.EstimatedPay.HasValue) ws.Cell(row, 13).Value = r.EstimatedPay.Value;
+            ws.Cell(row, 6).Value = r.DaysUnpaidLeave;
+            ws.Cell(row, 7).Value = r.WorkMissionDays;
+            ws.Cell(row, 8).Value = r.EarlyExitPermissionCount;
+            ws.Cell(row, 9).Value = r.HolidayDays;
+            ws.Cell(row, 10).Value = r.LateCount;
+            ws.Cell(row, 11).Value = r.TotalLateMinutes;
+            ws.Cell(row, 12).Value = r.TotalWorkedHours;
+            if (r.BaseSalary.HasValue) ws.Cell(row, 13).Value = r.BaseSalary.Value;
+            if (r.EstimatedPay.HasValue) ws.Cell(row, 14).Value = r.EstimatedPay.Value;
             row++;
         }
         ws.Columns().AdjustToContents();

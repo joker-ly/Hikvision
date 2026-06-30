@@ -1,6 +1,11 @@
 @model IEnumerable<Employee>
 @{
     ViewData["Title"] = "الموظفون";
+    var sort = ViewBag.Sort as string ?? "name";
+    var nameSort = sort == "name" ? "name_desc" : "name";
+    var nameArrow = sort == "name" ? "▲" : sort == "name_desc" ? "▼" : "";
+    var finSort = sort == "financial" ? "financial_desc" : "financial";
+    var finArrow = sort == "financial" ? "▲" : sort == "financial_desc" ? "▼" : "";
 }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>الموظفون</h2>
@@ -40,9 +45,9 @@
 <table class="table table-hover align-middle mb-0">
     <thead>
         <tr>
-            <th>الاسم</th>
+            <th><a asp-action="Index" asp-route-sort="@nameSort" class="text-decoration-none text-reset">الاسم @nameArrow</a></th>
             <th>رقم الجهاز</th>
-            <th>رقم المنظومة</th>
+            <th><a asp-action="Index" asp-route-sort="@finSort" class="text-decoration-none text-reset">رقم المنظومة @finArrow</a></th>
             <th>المجموعة</th>
             <th>الراتب الأساسي</th>
             <th>نشط</th>

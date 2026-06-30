@@ -123,6 +123,14 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                 .OrderBy(r => r.EventTime).ToList();
             var allPunches = deviceRecords.Concat(manualPunches).OrderBy(r => r.EventTime).ToList();
 
+            // 3أ) إجازة بدون مرتب: لا تُحتسب حضورًا وتُخصم من الصرف
+            if (res.ManualTypeApplied == ManualAttendanceType.UnpaidLeave)
+            {
+                res.IsUnpaidLeave = true;
+                results.Add(res);
+                continue;
+            }
+
             // 3) أنواع يدوية تُحتسب حضورًا/عذرًا مباشرة
             if (res.ManualTypeApplied is ManualAttendanceType.Leave
                 or ManualAttendanceType.WorkMission or ManualAttendanceType.TaskDone)

@@ -58,6 +58,7 @@ public class PayrollApiController : ControllerBase
                 r.DaysPresent,
                 r.DaysAbsent,
                 r.DaysLeave,
+                r.DaysUnpaidLeave,
                 r.WorkMissionDays,
                 r.EarlyExitPermissionCount,
                 r.HolidayDays,

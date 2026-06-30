@@ -28,6 +28,7 @@ public class PayrollRow
     public int DaysPresent { get; set; }
     public int DaysAbsent { get; set; }
     public int DaysLeave { get; set; }
+    public int DaysUnpaidLeave { get; set; }
     public int WorkMissionDays { get; set; }
     public int EarlyExitPermissionCount { get; set; }
     public int HolidayDays { get; set; }

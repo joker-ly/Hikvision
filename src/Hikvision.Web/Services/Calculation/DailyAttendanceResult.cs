@@ -23,6 +23,9 @@ public class DailyAttendanceResult
     /// <summary>مغادرة مبكرة (قبل موعد الخروج) — تُحتسب غيابًا ما لم يوجد إذن خروج.</summary>
     public bool IsEarlyLeave { get; set; }
 
+    /// <summary>إجازة بدون مرتب — لا تُحتسب حضورًا وتُخصم من الصرف.</summary>
+    public bool IsUnpaidLeave { get; set; }
+
     /// <summary>وُجد إذن خروج مبكر لهذا اليوم.</summary>
     public bool HasPermittedExit { get; set; }
 
