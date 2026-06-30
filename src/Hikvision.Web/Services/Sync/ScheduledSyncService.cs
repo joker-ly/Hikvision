@@ -1,6 +1,7 @@
 using System.Globalization;
 using Hikvision.Web.Data;
 using Hikvision.Web.Services.Audit;
+using Hikvision.Web.Services.Setup;
 using Hikvision.Web.Services.TimeZoneSupport;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,11 +16,11 @@ public class ScheduledSyncService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _config;
     private readonly ILogger<ScheduledSyncService> _logger;
-    private readonly Hikvision.Web.Services.Setup.DbConnectionStringProvider _dbProvider;
+    private readonly DbConnectionStringProvider _dbProvider;
 
     public ScheduledSyncService(
         IServiceScopeFactory scopeFactory, IConfiguration config, ILogger<ScheduledSyncService> logger,
-        Hikvision.Web.Services.Setup.DbConnectionStringProvider dbProvider)
+        DbConnectionStringProvider dbProvider)
     {
         _scopeFactory = scopeFactory;
         _config = config;
