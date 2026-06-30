@@ -29,11 +29,16 @@ public class ManualAttendanceController : Controller
             "Id", "FullName", selected);
 
     [HttpGet]
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> Create(int? employeeId)
     {
-        await PopulateEmployees();
+        await PopulateEmployees(employeeId);
         var today = DateOnly.FromDateTime(_clock.Now);
-        return View(new ManualEntryViewModel { FromDate = today, ToDate = today });
+        return View(new ManualEntryViewModel
+        {
+            EmployeeId = employeeId ?? 0,
+            FromDate = today,
+            ToDate = today
+        });
     }
 
     [HttpPost]

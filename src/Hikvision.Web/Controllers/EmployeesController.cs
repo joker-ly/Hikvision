@@ -24,9 +24,19 @@ public class EmployeesController : Controller
     private async Task PopulateGroups(int? selected = null)
         => ViewBag.Groups = new SelectList(await _db.EmployeeGroups.AsNoTracking().ToListAsync(), "Id", "Name", selected);
 
-    public async Task<IActionResult> Index(string? sort)
+    public async Task<IActionResult> Index(string? sort, string? search)
     {
         var query = _db.Employees.Include(e => e.Group).AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(e =>
+                (e.FinancialNo != null && e.FinancialNo.Contains(term)) ||
+                e.FullName.Contains(term) ||
+                e.DeviceEmployeeNo.Contains(term));
+        }
+
         query = sort switch
         {
             "name_desc" => query.OrderByDescending(e => e.FullName),
@@ -36,6 +46,7 @@ public class EmployeesController : Controller
         };
         var employees = await query.ToListAsync();
         ViewBag.Sort = sort ?? "name";
+        ViewBag.Search = search;
         await PopulateGroups();
         return View(employees);
     }

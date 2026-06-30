@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "الموظفون";
     var sort = ViewBag.Sort as string ?? "name";
+    var search = ViewBag.Search as string;
     var nameSort = sort == "name" ? "name_desc" : "name";
     var nameArrow = sort == "name" ? "▲" : sort == "name_desc" ? "▼" : "";
     var finSort = sort == "financial" ? "financial_desc" : "financial";
@@ -40,14 +41,31 @@
     </div>
 </div>
 
+<form asp-action="Index" method="get" class="row g-2 mb-3" style="max-width:560px;">
+    <input type="hidden" name="sort" value="@sort" />
+    <div class="col">
+        <input type="search" name="search" value="@search" class="form-control"
+               placeholder="بحث بالرقم المالي أو الاسم أو رقم الجهاز" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i> بحث</button>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(search))
+    {
+        <div class="col-auto">
+            <a asp-action="Index" asp-route-sort="@sort" class="btn btn-outline-secondary">إلغاء</a>
+        </div>
+    }
+</form>
+
 <div class="card table-card">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
     <thead>
         <tr>
-            <th><a asp-action="Index" asp-route-sort="@nameSort" class="text-decoration-none text-reset">الاسم @nameArrow</a></th>
+            <th><a asp-action="Index" asp-route-sort="@nameSort" asp-route-search="@search" class="text-decoration-none text-reset">الاسم @nameArrow</a></th>
             <th>رقم الجهاز</th>
-            <th><a asp-action="Index" asp-route-sort="@finSort" class="text-decoration-none text-reset">رقم المنظومة @finArrow</a></th>
+            <th><a asp-action="Index" asp-route-sort="@finSort" asp-route-search="@search" class="text-decoration-none text-reset">رقم المنظومة @finArrow</a></th>
             <th>المجموعة</th>
             <th>الراتب الأساسي</th>
             <th>نشط</th>
@@ -65,8 +83,9 @@
                 <td>@(e.BaseSalary?.ToString("N2") ?? "—")</td>
                 <td>@(e.IsActive ? Html.Raw("<span class='badge bg-soft-success'>نعم</span>") : Html.Raw("<span class='badge bg-soft-danger'>لا</span>"))</td>
                 <td class="page-actions">
-                    <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
-                    <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info"><i class="bi bi-card-checklist"></i></a>
+                    <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                    <a asp-controller="ManualAttendance" asp-action="Create" asp-route-employeeId="@e.Id" target="_blank" class="btn btn-sm btn-outline-success" title="إدخال يدوي"><i class="bi bi-pencil-square"></i></a>
+                    <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info" title="سجلات الحضور"><i class="bi bi-card-checklist"></i></a>
                     <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline" onsubmit="return confirm('تأكيد حذف الموظف؟');">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
