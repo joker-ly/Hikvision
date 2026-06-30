@@ -37,14 +37,17 @@ public class EmployeesController : Controller
                 e.DeviceEmployeeNo.Contains(term));
         }
 
-        query = sort switch
+        var list = await query.ToListAsync();
+
+        // ترتيب الرقم المالي رقميًا (لا نصيًا) حتى يأتي 9 قبل 90 وليس بعد 89
+        static long FinKey(string? s) => long.TryParse(s, out var n) ? n : long.MaxValue;
+        var employees = sort switch
         {
-            "name_desc" => query.OrderByDescending(e => e.FullName),
-            "financial" => query.OrderBy(e => e.FinancialNo),
-            "financial_desc" => query.OrderByDescending(e => e.FinancialNo),
-            _ => query.OrderBy(e => e.FullName)
+            "name_desc" => list.OrderByDescending(e => e.FullName).ToList(),
+            "financial" => list.OrderBy(e => FinKey(e.FinancialNo)).ThenBy(e => e.FullName).ToList(),
+            "financial_desc" => list.OrderByDescending(e => FinKey(e.FinancialNo)).ThenBy(e => e.FullName).ToList(),
+            _ => list.OrderBy(e => e.FullName).ToList()
         };
-        var employees = await query.ToListAsync();
         ViewBag.Sort = sort ?? "name";
         ViewBag.Search = search;
         await PopulateGroups();
