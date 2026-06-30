@@ -73,7 +73,7 @@ public class HomeController : Controller
             var isWorkingDay = schedule?.IsWorkingDay(today.DayOfWeek) ?? true;
 
             // موظف معفى (انتهت خدمته): لا يُحتسب بعد تاريخ الإعفاء — يُستبعد من قوائم اليوم
-            if (e.ExemptionDate is { } exDate && today > exDate)
+            if (e.ExemptionDate is { } exDate && DateOnly.FromDateTime(today) > exDate)
                 continue;
 
             // مجموعة معفاة من البصمة: تُعتبر حاضرة دائمًا (لا غياب ولا تأخير)
