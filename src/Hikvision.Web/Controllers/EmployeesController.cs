@@ -46,6 +46,8 @@ public class EmployeesController : Controller
             "name_desc" => list.OrderByDescending(e => e.FullName).ToList(),
             "financial" => list.OrderBy(e => FinKey(e.FinancialNo)).ThenBy(e => e.FullName).ToList(),
             "financial_desc" => list.OrderByDescending(e => FinKey(e.FinancialNo)).ThenBy(e => e.FullName).ToList(),
+            "group" => list.OrderBy(e => e.Group?.Name).ThenBy(e => e.FullName).ToList(),
+            "group_desc" => list.OrderByDescending(e => e.Group?.Name).ThenBy(e => e.FullName).ToList(),
             _ => list.OrderBy(e => e.FullName).ToList()
         };
         ViewBag.Sort = sort ?? "name";

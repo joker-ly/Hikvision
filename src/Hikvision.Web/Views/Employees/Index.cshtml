@@ -7,6 +7,8 @@
     var nameArrow = sort == "name" ? "▲" : sort == "name_desc" ? "▼" : "";
     var finSort = sort == "financial" ? "financial_desc" : "financial";
     var finArrow = sort == "financial" ? "▲" : sort == "financial_desc" ? "▼" : "";
+    var grpSort = sort == "group" ? "group_desc" : "group";
+    var grpArrow = sort == "group" ? "▲" : sort == "group_desc" ? "▼" : "";
 }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>الموظفون</h2>
@@ -66,7 +68,7 @@
             <th><a asp-action="Index" asp-route-sort="@nameSort" asp-route-search="@search" class="text-decoration-none text-reset">الاسم @nameArrow</a></th>
             <th>رقم الجهاز</th>
             <th><a asp-action="Index" asp-route-sort="@finSort" asp-route-search="@search" class="text-decoration-none text-reset">الرقم المالي @finArrow</a></th>
-            <th>المجموعة</th>
+            <th><a asp-action="Index" asp-route-sort="@grpSort" asp-route-search="@search" class="text-decoration-none text-reset">المجموعة @grpArrow</a></th>
             <th>الراتب الأساسي</th>
             <th>نشط</th>
             <th></th>
