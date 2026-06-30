@@ -41,5 +41,10 @@ public class Employee
     [DataType(DataType.Date)]
     public DateOnly? HireDate { get; set; }
 
+    /// <summary>تاريخ الإعفاء: لا يُحتسب أي حضور للموظف بعد هذا التاريخ. فارغ = غير معفى.</summary>
+    [Display(Name = "تاريخ الإعفاء")]
+    [DataType(DataType.Date)]
+    public DateOnly? ExemptionDate { get; set; }
+
     public ICollection<AttendanceRecord> Records { get; set; } = new List<AttendanceRecord>();
 }

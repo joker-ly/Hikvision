@@ -25,5 +25,9 @@ public enum ManualAttendanceType
 
     /// <summary>إنجاز عمل.</summary>
     [Display(Name = "إنجاز عمل")]
-    TaskDone = 4
+    TaskDone = 4,
+
+    /// <summary>إعفاء من تاريخ معيّن: لا يُحتسب أي حضور بعده.</summary>
+    [Display(Name = "إعفاء")]
+    Exemption = 5
 }

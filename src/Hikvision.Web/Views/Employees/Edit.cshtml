@@ -40,6 +40,11 @@
             <label asp-for="HireDate" class="form-label"></label>
             <input asp-for="HireDate" type="date" class="form-control" />
         </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="ExemptionDate" class="form-label"></label>
+            <input asp-for="ExemptionDate" type="date" class="form-control" />
+            <div class="form-text">لا يُحتسب أي حضور بعد هذا التاريخ. اتركه فارغًا لإلغاء الإعفاء.</div>
+        </div>
         <div class="col-md-6 mb-3 d-flex align-items-end">
             <div class="form-check">
                 <input asp-for="IsActive" class="form-check-input" />

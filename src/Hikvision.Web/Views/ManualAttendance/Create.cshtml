@@ -21,25 +21,29 @@
             <option value="@((int)ManualAttendanceType.WorkMission)">مهمة عمل</option>
             <option value="@((int)ManualAttendanceType.TaskDone)">إنجاز عمل</option>
             <option value="@((int)ManualAttendanceType.PermittedExit)">خروج بإذن (مغادرة مبكرة)</option>
+            <option value="@((int)ManualAttendanceType.Exemption)">إعفاء (إيقاف احتساب الحضور بعد تاريخ)</option>
         </select>
         <span asp-validation-for="ManualType" class="text-danger"></span>
         <div class="form-text" id="permitHint" style="display:none">
             لإذن الخروج المبكر: يُسجَّل خروج عند "وقت الخروج" أدناه، ويُعفى الموظف من احتساب المغادرة المبكرة غيابًا.
         </div>
+        <div class="form-text text-warning" id="exemptHint" style="display:none">
+            الإعفاء: يُضبط "تاريخ الإعفاء" أدناه على الموظف، ولن يُحتسب له أي حضور بعد هذا التاريخ في التقارير والـ API.
+        </div>
     </div>
     <div class="row">
         <div class="col-md-6 mb-3">
-            <label asp-for="FromDate" class="form-label"></label>
+            <label asp-for="FromDate" class="form-label" id="fromDateLabel"></label>
             <input asp-for="FromDate" type="date" class="form-control" />
             <span asp-validation-for="FromDate" class="text-danger"></span>
         </div>
-        <div class="col-md-6 mb-3">
+        <div class="col-md-6 mb-3" id="toDateBox">
             <label asp-for="ToDate" class="form-label"></label>
             <input asp-for="ToDate" type="date" class="form-control" />
             <span asp-validation-for="ToDate" class="text-danger"></span>
         </div>
     </div>
-    <div class="row">
+    <div class="row" id="timesRow">
         <div class="col-md-6 mb-3">
             <label asp-for="StartTime" class="form-label"></label>
             <input asp-for="StartTime" type="time" class="form-control" />
@@ -49,7 +53,7 @@
             <input asp-for="EndTime" type="time" class="form-control" />
         </div>
     </div>
-    <div class="form-check mb-3">
+    <div class="form-check mb-3" id="workingDaysBox">
         <input asp-for="WorkingDaysOnly" class="form-check-input" />
         <label asp-for="WorkingDaysOnly" class="form-check-label"></label>
         <div class="form-text">عند التفعيل، تُتجاهَل العطلات الأسبوعية حسب أيام عمل المجموعة.</div>
@@ -68,8 +72,24 @@
     <script>
         (function () {
             var sel = document.getElementById('manualType');
-            var hint = document.getElementById('permitHint');
-            function toggle() { hint.style.display = (sel.value === '@((int)ManualAttendanceType.PermittedExit)') ? 'block' : 'none'; }
+            var permitHint = document.getElementById('permitHint');
+            var exemptHint = document.getElementById('exemptHint');
+            var toDateBox = document.getElementById('toDateBox');
+            var timesRow = document.getElementById('timesRow');
+            var workingDaysBox = document.getElementById('workingDaysBox');
+            var fromDateLabel = document.getElementById('fromDateLabel');
+            var PERMIT = '@((int)ManualAttendanceType.PermittedExit)';
+            var EXEMPT = '@((int)ManualAttendanceType.Exemption)';
+            function toggle() {
+                var isExempt = (sel.value === EXEMPT);
+                permitHint.style.display = (sel.value === PERMIT) ? 'block' : 'none';
+                exemptHint.style.display = isExempt ? 'block' : 'none';
+                // عند الإعفاء: نُخفي حقول الفترة والأوقات ونستخدم "من تاريخ" كتاريخ إعفاء
+                toDateBox.style.display = isExempt ? 'none' : '';
+                timesRow.style.display = isExempt ? 'none' : '';
+                workingDaysBox.style.display = isExempt ? 'none' : '';
+                fromDateLabel.textContent = isExempt ? 'تاريخ الإعفاء' : 'من تاريخ';
+            }
             sel.addEventListener('change', toggle); toggle();
         })();
     </script>

@@ -72,6 +72,10 @@ public class HomeController : Controller
             var schedule = e.Group?.Schedule;
             var isWorkingDay = schedule?.IsWorkingDay(today.DayOfWeek) ?? true;
 
+            // موظف معفى (انتهت خدمته): لا يُحتسب بعد تاريخ الإعفاء — يُستبعد من قوائم اليوم
+            if (e.ExemptionDate is { } exDate && today > exDate)
+                continue;
+
             // مجموعة معفاة من البصمة: تُعتبر حاضرة دائمًا (لا غياب ولا تأخير)
             if (e.Group?.IsFingerprintExempt ?? false)
             {

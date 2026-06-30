@@ -29,7 +29,7 @@ public class AttendanceCalculationService : IAttendanceCalculationService
 
         var holidays = await LoadHolidaysAsync(from, to, ct);
 
-        return Calculate(employee.Group!, employee.Group!.Schedule, records, from, to, holidays);
+        return Calculate(employee.Group!, employee.Group!.Schedule, records, from, to, holidays, employee.ExemptionDate);
     }
 
     /// <summary>تحميل كل تواريخ الإجازات الرسمية ضمن المدى كمجموعة تواريخ مفردة.</summary>
@@ -49,7 +49,7 @@ public class AttendanceCalculationService : IAttendanceCalculationService
     public List<DailyAttendanceResult> Calculate(
         EmployeeGroup group, WorkSchedule? schedule,
         IReadOnlyCollection<AttendanceRecord> records, DateOnly from, DateOnly to,
-        ISet<DateOnly> holidays)
+        ISet<DateOnly> holidays, DateOnly? exemptionDate = null)
     {
         var results = new List<DailyAttendanceResult>();
         var byDay = records.GroupBy(r => DateOnly.FromDateTime(r.EventTime))
@@ -57,6 +57,10 @@ public class AttendanceCalculationService : IAttendanceCalculationService
 
         for (var day = from; day <= to; day = day.AddDays(1))
         {
+            // الإعفاء: لا يُحتسب أي يوم بعد تاريخ الإعفاء (لا حضور ولا غياب)
+            if (exemptionDate is { } ex && day > ex)
+                continue;
+
             var dayRecords = byDay.TryGetValue(day, out var list) ? list : new List<AttendanceRecord>();
             var res = new DailyAttendanceResult
             {

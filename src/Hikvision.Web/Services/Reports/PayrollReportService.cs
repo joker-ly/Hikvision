@@ -45,7 +45,7 @@ public class PayrollReportService : IPayrollReportService
                 .Where(r => r.EmployeeId == emp.Id && r.EventTime >= fromDt && r.EventTime <= toDt)
                 .AsNoTracking().ToListAsync(ct);
 
-            var days = _calc.Calculate(emp.Group!, emp.Group!.Schedule, records, from, to, holidays);
+            var days = _calc.Calculate(emp.Group!, emp.Group!.Schedule, records, from, to, holidays, emp.ExemptionDate);
 
             var workingDays = days.Count(d => d.IsWorkingDay);
             var absentDays = days.Count(d => d.IsAbsent);

@@ -15,5 +15,5 @@ public interface IAttendanceCalculationService
     List<DailyAttendanceResult> Calculate(
         EmployeeGroup group, WorkSchedule? schedule,
         IReadOnlyCollection<AttendanceRecord> records, DateOnly from, DateOnly to,
-        ISet<DateOnly> holidays);
+        ISet<DateOnly> holidays, DateOnly? exemptionDate = null);
 }

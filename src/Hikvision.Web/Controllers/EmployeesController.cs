@@ -125,7 +125,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,EmployeeGroupId,DeviceEmployeeNo,FinancialNo,FullName,NationalId,IsActive,BaseSalary,HireDate")] Employee model)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,EmployeeGroupId,DeviceEmployeeNo,FinancialNo,FullName,NationalId,IsActive,BaseSalary,HireDate,ExemptionDate")] Employee model)
     {
         if (id != model.Id) return NotFound();
 
@@ -149,6 +149,7 @@ public class EmployeesController : Controller
         emp.IsActive = model.IsActive;
         emp.BaseSalary = model.BaseSalary;
         emp.HireDate = model.HireDate;
+        emp.ExemptionDate = model.ExemptionDate;
 
         await _db.SaveChangesAsync();
         await _audit.LogAsync("تعديل موظف", $"{emp.FullName} (رقم جهاز {emp.DeviceEmployeeNo}).");

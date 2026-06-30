@@ -42,7 +42,8 @@ public class ManualAttendanceController : Controller
     {
         if (model.ManualType == ManualAttendanceType.None)
             ModelState.AddModelError(nameof(model.ManualType), "اختر نوع السجل اليدوي.");
-        if (model.ToDate < model.FromDate)
+        // الإعفاء يستخدم "من تاريخ" فقط كتاريخ إعفاء؛ باقي الأنواع تتطلب فترة صحيحة
+        if (model.ManualType != ManualAttendanceType.Exemption && model.ToDate < model.FromDate)
             ModelState.AddModelError(nameof(model.ToDate), "تاريخ النهاية يجب أن يكون بعد تاريخ البداية.");
 
         if (!ModelState.IsValid)
@@ -59,6 +60,18 @@ public class ManualAttendanceController : Controller
             ModelState.AddModelError(nameof(model.EmployeeId), "الموظف غير موجود.");
             await PopulateEmployees(model.EmployeeId);
             return View(model);
+        }
+
+        // الإعفاء: يُضبط تاريخ الإعفاء على الموظف ولا يُحتسب له أي حضور بعده (بلا توليد بصمات)
+        if (model.ManualType == ManualAttendanceType.Exemption)
+        {
+            employee.ExemptionDate = model.FromDate;
+            await _db.SaveChangesAsync();
+            await _audit.LogAsync("إعفاء موظف",
+                $"موظف #{employee.Id} ({employee.FullName})، تاريخ الإعفاء {model.FromDate} — لا يُحتسب حضور بعده. {model.Note}");
+            TempData["Success"] =
+                $"تم إعفاء {employee.FullName} اعتبارًا من {model.FromDate:yyyy-MM-dd}؛ لن يُحتسب له حضور بعد هذا التاريخ.";
+            return RedirectToAction("Index", "Attendance", new { source = AttendanceSource.Manual });
         }
 
         var schedule = employee.Group?.Schedule;

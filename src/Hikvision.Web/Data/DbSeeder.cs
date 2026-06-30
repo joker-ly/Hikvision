@@ -118,7 +118,9 @@ ALTER TABLE [DeviceConfigs] ADD [LastScheduledSyncDate] datetime2 NULL;
 IF COL_LENGTH(N'[WorkSchedules]', N'CheckoutGraceMinutes') IS NULL
 ALTER TABLE [WorkSchedules] ADD [CheckoutGraceMinutes] int NOT NULL CONSTRAINT [DF_WorkSchedules_CheckoutGraceMinutes] DEFAULT 0;
 IF COL_LENGTH(N'[EmployeeGroups]', N'IsFingerprintExempt') IS NULL
-ALTER TABLE [EmployeeGroups] ADD [IsFingerprintExempt] bit NOT NULL CONSTRAINT [DF_EmployeeGroups_IsFingerprintExempt] DEFAULT 0;";
+ALTER TABLE [EmployeeGroups] ADD [IsFingerprintExempt] bit NOT NULL CONSTRAINT [DF_EmployeeGroups_IsFingerprintExempt] DEFAULT 0;
+IF COL_LENGTH(N'[Employees]', N'ExemptionDate') IS NULL
+ALTER TABLE [Employees] ADD [ExemptionDate] date NULL;";
         try
         {
             await db.Database.ExecuteSqlRawAsync(sql);
