@@ -14,15 +14,36 @@
     {
         ManualAttendanceType.WorkMission => "مهمة عمل",
         ManualAttendanceType.Leave => "إجازة",
+        ManualAttendanceType.UnpaidLeave => "إجازة بدون مرتب",
         ManualAttendanceType.PermittedExit => "خروج بإذن",
         ManualAttendanceType.TaskDone => "إنجاز عمل",
+        ManualAttendanceType.Exemption => "إعفاء",
         _ => "—"
     };
+    var fEmp = (int?)ViewBag.EmployeeId;
+    var fFrom = (DateOnly?)ViewBag.From;
+    var fTo = (DateOnly?)ViewBag.To;
+    var fSrc = ((object?)ViewBag.Source)?.ToString();
+    var hasManual = Model.Any(r => r.Source == AttendanceSource.Manual);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>سجلات الحضور</h2>
-    <a asp-controller="ManualAttendance" asp-action="Create" class="btn btn-success">+ إدخال يدوي</a>
+    <div class="d-flex gap-2">
+        @if (hasManual)
+        {
+            <form asp-action="DeleteManualFiltered" method="post" class="d-inline"
+                  onsubmit="return confirm('سيتم حذف كل السجلات اليدوية ضمن التصفية الحالية نهائيًا. متابعة؟');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="employeeId" value="@fEmp" />
+                <input type="hidden" name="from" value="@(fFrom?.ToString("yyyy-MM-dd"))" />
+                <input type="hidden" name="to" value="@(fTo?.ToString("yyyy-MM-dd"))" />
+                <input type="hidden" name="source" value="@fSrc" />
+                <button type="submit" class="btn btn-outline-danger">🗑 حذف السجلات اليدوية (حسب التصفية)</button>
+            </form>
+        }
+        <a asp-controller="ManualAttendance" asp-action="Create" class="btn btn-success">+ إدخال يدوي</a>
+    </div>
 </div>
 
 <form method="get" class="row g-2 align-items-end mb-3 card card-body">
@@ -65,6 +86,7 @@
             <th>الاتجاه</th>
             <th>النوع اليدوي</th>
             <th>ملاحظة</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -86,6 +108,21 @@
                 <td>@DirText(r.Direction)</td>
                 <td>@(r.Source == AttendanceSource.Manual ? ManualText(r.ManualType) : "—")</td>
                 <td>@r.Note</td>
+                <td class="page-actions">
+                    @if (r.Source == AttendanceSource.Manual)
+                    {
+                        <form asp-action="DeleteManual" method="post" class="d-inline"
+                              onsubmit="return confirm('تأكيد حذف هذا السجل اليدوي؟');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <input type="hidden" name="employeeId" value="@fEmp" />
+                            <input type="hidden" name="from" value="@(fFrom?.ToString("yyyy-MM-dd"))" />
+                            <input type="hidden" name="to" value="@(fTo?.ToString("yyyy-MM-dd"))" />
+                            <input type="hidden" name="source" value="@fSrc" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                        </form>
+                    }
+                </td>
             </tr>
         }
     </tbody>
