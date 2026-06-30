@@ -45,26 +45,32 @@ public class HomeController : Controller
             .Where(e => e.IsActive)
             .AsNoTracking().ToListAsync();
 
-        // سجلات اليوم
+        // سجلات اليوم (جهاز + يدوي) مع المصدر
         var todayRecords = await _db.AttendanceRecords
             .Where(r => r.EventTime >= today && r.EventTime < tomorrow)
-            .Select(r => new { r.EmployeeId, r.EventTime, r.Direction })
+            .Select(r => new { r.EmployeeId, r.EventTime, r.Direction, r.Source })
             .AsNoTracking().ToListAsync();
 
-        // الموظفون الذين لديهم أي سجل خلال آخر 30 يومًا
-        var recentIds = (await _db.AttendanceRecords
-            .Where(r => r.EventTime >= last30)
-            .Select(r => r.EmployeeId)
-            .Distinct().ToListAsync()).ToHashSet();
-
-        // الموظفون الذين لديهم أي سجل خلال آخر 15 يومًا
-        var recentIds15 = (await _db.AttendanceRecords
-            .Where(r => r.EventTime >= last15)
-            .Select(r => r.EmployeeId)
-            .Distinct().ToListAsync()).ToHashSet();
-
-        var todayByEmp = todayRecords.GroupBy(r => r.EmployeeId)
+        // إحصاءات الحضور/التأخير/ما زال بالداخل تُبنى من بصمات الجهاز فقط
+        var deviceByEmp = todayRecords
+            .Where(r => r.Source == AttendanceSource.Device)
+            .GroupBy(r => r.EmployeeId)
             .ToDictionary(g => g.Key, g => g.OrderBy(x => x.EventTime).ToList());
+
+        // الغياب يُحدَّد بغياب أي سجل اليوم (جهاز أو يدوي) — فمن له إجازة/مهمة يدوية لا يُعد غائبًا
+        var anyRecordToday = todayRecords.Select(r => r.EmployeeId).ToHashSet();
+
+        // الموظفون الذين لديهم بصمة جهاز خلال آخر 30 يومًا
+        var recentIds = (await _db.AttendanceRecords
+            .Where(r => r.EventTime >= last30 && r.Source == AttendanceSource.Device)
+            .Select(r => r.EmployeeId)
+            .Distinct().ToListAsync()).ToHashSet();
+
+        // الموظفون الذين لديهم بصمة جهاز خلال آخر 15 يومًا
+        var recentIds15 = (await _db.AttendanceRecords
+            .Where(r => r.EventTime >= last15 && r.Source == AttendanceSource.Device)
+            .Select(r => r.EmployeeId)
+            .Distinct().ToListAsync()).ToHashSet();
 
         foreach (var e in employees.OrderBy(e => e.FullName))
         {
@@ -76,14 +82,7 @@ public class HomeController : Controller
             if (e.ExemptionDate is { } exDate && DateOnly.FromDateTime(today) > exDate)
                 continue;
 
-            // مجموعة معفاة من البصمة: تُعتبر حاضرة دائمًا (لا غياب ولا تأخير)
-            if (e.Group?.IsFingerprintExempt ?? false)
-            {
-                vm.PresentToday.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, "معفي من البصمة"));
-                continue;
-            }
-
-            if (todayByEmp.TryGetValue(e.Id, out var recs) && recs.Count > 0)
+            if (deviceByEmp.TryGetValue(e.Id, out var recs) && recs.Count > 0)
             {
                 var firstIn = recs.First().EventTime;
                 var lastRec = recs.Last();
@@ -109,7 +108,8 @@ public class HomeController : Controller
                     vm.StillInside.Add(new DashboardEmpRow(
                         e.Id, e.FullName, groupName, $"آخر حركة {lastRec.EventTime:HH:mm}"));
             }
-            else if (isWorkingDay)
+            // غائب: يوم عمل وليس له بصمة جهاز ولا أي سجل يدوي اليوم
+            else if (isWorkingDay && !anyRecordToday.Contains(e.Id))
             {
                 vm.AbsentToday.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, null));
             }
