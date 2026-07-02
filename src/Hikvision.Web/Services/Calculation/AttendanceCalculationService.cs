@@ -181,17 +181,25 @@ public class AttendanceCalculationService : IAttendanceCalculationService
             .Select(r => r.Date)
             .ToList();
 
+        // العطلة غير المحتسبة حضورًا تُحتسب غيابًا — حتى يكون مجموع (حضور + غياب)
+        // مغطّيًا للفترة كاملة، لأن المنظومة المالية تعتمد أيام الغياب مباشرة.
         if (attendedDates.Count == 0)
         {
             foreach (var d in deferredHolidays)
+            {
                 d.IsPresent = false;
+                d.IsAbsent = true;
+            }
         }
         else
         {
             var firstValid = attendedDates.Min();
             var longAbsence = firstValid.DayNumber - from.DayNumber >= 7;
             foreach (var d in deferredHolidays)
+            {
                 d.IsPresent = !longAbsence || d.Date >= firstValid;
+                d.IsAbsent = !d.IsPresent;
+            }
         }
 
         return results;
