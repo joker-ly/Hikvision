@@ -47,9 +47,11 @@ public class PayrollReportService : IPayrollReportService
 
             var days = _calc.Calculate(emp.Group!, emp.Group!.Schedule, records, from, to, holidays, emp.ExemptionDate);
 
-            var workingDays = days.Count(d => d.IsWorkingDay);
-            var absentDays = days.Count(d => d.IsAbsent);
             var unpaidLeaveDays = days.Count(d => d.IsUnpaidLeave);
+            var presentDays = days.Count(d => d.IsPresent);
+            // الغياب = عدد أيام الفترة − أيام الحضور (المنظومة المالية تعتمد الغياب مباشرة).
+            // days.Count = أيام الفترة كلها (باستثناء ما بعد تاريخ الإعفاء).
+            var absentDays = days.Count - presentDays;
 
             var row = new PayrollRow
             {
@@ -57,7 +59,7 @@ public class PayrollReportService : IPayrollReportService
                 FullName = emp.FullName,
                 FinancialNo = emp.FinancialNo,
                 GroupName = emp.Group!.Name,
-                DaysPresent = days.Count(d => d.IsPresent),
+                DaysPresent = presentDays,
                 DaysAbsent = absentDays,
                 DaysLeave = days.Count(d => d.ManualTypeApplied == ManualAttendanceType.Leave),
                 DaysUnpaidLeave = unpaidLeaveDays,
@@ -70,12 +72,12 @@ public class PayrollReportService : IPayrollReportService
                 BaseSalary = emp.BaseSalary
             };
 
-            // تقدير مبدئي للصرف: خصم عن أيام الغياب غير المبرّر + الإجازات بدون مرتب
-            if (emp.BaseSalary is { } salary && workingDays > 0)
+            // تقدير مبدئي للصرف: خصم عن أيام الغياب (تشمل ضمنيًا الإجازة بدون مرتب
+            // لأنها ليست حضورًا — فلا تُخصم مرة ثانية). قيمة اليوم = الراتب ÷ أيام الفترة.
+            if (emp.BaseSalary is { } salary && days.Count > 0)
             {
-                var perDay = salary / workingDays;
-                var deductDays = absentDays + unpaidLeaveDays;
-                row.EstimatedPay = Math.Round(Math.Max(0, salary - perDay * deductDays), 2);
+                var perDay = salary / days.Count;
+                row.EstimatedPay = Math.Round(Math.Max(0, salary - perDay * absentDays), 2);
             }
             else
             {
