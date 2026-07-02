@@ -55,13 +55,9 @@ public class AttendanceCalculationService : IAttendanceCalculationService
         var byDay = records.GroupBy(r => DateOnly.FromDateTime(r.EventTime))
                            .ToDictionary(g => g.Key, g => g.ToList());
 
-        // هل حضر الموظف فعليًا خلال الفترة؟ (بصمة جهاز أو حضور يدوي مدفوع)
-        // إن لم يحضر إطلاقًا فلا تُحتسب له العطل الرسمية ولا عطل نهاية الأسبوع حضورًا.
-        var hasRealAttendance = records.Any(r =>
-            r.Source == AttendanceSource.Device ||
-            (r.Source == AttendanceSource.Manual &&
-             r.ManualType is ManualAttendanceType.Leave
-                or ManualAttendanceType.WorkMission or ManualAttendanceType.TaskDone));
+        // العطل الرسمية وعطل نهاية الأسبوع لا يتقرر احتسابها حضورًا إلا بعد معرفة
+        // أيام الحضور الصحيح (ضمن المواعيد) — لذلك تُؤجَّل لنهاية الحساب.
+        var deferredHolidays = new List<DailyAttendanceResult>();
 
         for (var day = from; day <= to; day = day.AddDays(1))
         {
@@ -92,19 +88,19 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                 continue;
             }
 
-            // 1) الإجازات الرسمية المعمّمة: تُحتسب حضورًا لمن حضر فعلًا خلال الفترة فقط
+            // 1) الإجازات الرسمية المعمّمة: يُؤجَّل قرار احتسابها لنهاية الحساب
             if (holidays.Contains(day))
             {
                 res.IsHoliday = true;
-                res.IsPresent = hasRealAttendance;
+                deferredHolidays.Add(res);
                 results.Add(res);
                 continue;
             }
 
-            // 2) عطلة نهاية الأسبوع (يوم غير عمل): تُحتسب حضورًا لمن حضر فعلًا فقط
+            // 2) عطلة نهاية الأسبوع (يوم غير عمل): يُؤجَّل قرار احتسابها لنهاية الحساب
             if (!res.IsWorkingDay)
             {
-                res.IsPresent = hasRealAttendance;
+                deferredHolidays.Add(res);
                 results.Add(res);
                 continue;
             }
@@ -173,6 +169,29 @@ public class AttendanceCalculationService : IAttendanceCalculationService
             res.IsAbsent = res.IsWorkingDay && !res.IsPresent;
 
             results.Add(res);
+        }
+
+        // قرار احتساب العطل (رسمية + نهاية أسبوع):
+        // - تُحتسب حضورًا فقط لمن له يوم حضور صحيح ضمن المواعيد (يوم عمل احتُسب حضورًا).
+        //   من بصم خارج المواعيد واحتُسب غائبًا لا يُعتدّ ببصمته.
+        // - وإن تأخر أول حضور صحيح أسبوعًا فأكثر عن بداية الفترة، تُحتسب العطل
+        //   من أول يوم حضور صحيح فقط (ما قبله لا يُحتسب حتى لو وُجدت بصمات).
+        var attendedDates = results
+            .Where(r => r.IsWorkingDay && !r.IsHoliday && r.IsPresent)
+            .Select(r => r.Date)
+            .ToList();
+
+        if (attendedDates.Count == 0)
+        {
+            foreach (var d in deferredHolidays)
+                d.IsPresent = false;
+        }
+        else
+        {
+            var firstValid = attendedDates.Min();
+            var longAbsence = firstValid.DayNumber - from.DayNumber >= 7;
+            foreach (var d in deferredHolidays)
+                d.IsPresent = !longAbsence || d.Date >= firstValid;
         }
 
         return results;
