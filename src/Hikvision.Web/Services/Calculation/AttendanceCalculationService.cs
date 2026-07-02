@@ -55,6 +55,14 @@ public class AttendanceCalculationService : IAttendanceCalculationService
         var byDay = records.GroupBy(r => DateOnly.FromDateTime(r.EventTime))
                            .ToDictionary(g => g.Key, g => g.ToList());
 
+        // هل حضر الموظف فعليًا خلال الفترة؟ (بصمة جهاز أو حضور يدوي مدفوع)
+        // إن لم يحضر إطلاقًا فلا تُحتسب له العطل الرسمية ولا عطل نهاية الأسبوع حضورًا.
+        var hasRealAttendance = records.Any(r =>
+            r.Source == AttendanceSource.Device ||
+            (r.Source == AttendanceSource.Manual &&
+             r.ManualType is ManualAttendanceType.Leave
+                or ManualAttendanceType.WorkMission or ManualAttendanceType.TaskDone));
+
         for (var day = from; day <= to; day = day.AddDays(1))
         {
             // الإعفاء: لا يُحتسب أي يوم بعد تاريخ الإعفاء (لا حضور ولا غياب)
@@ -84,19 +92,19 @@ public class AttendanceCalculationService : IAttendanceCalculationService
                 continue;
             }
 
-            // 1) الإجازات الرسمية المعمّمة: حضور للجميع
+            // 1) الإجازات الرسمية المعمّمة: تُحتسب حضورًا لمن حضر فعلًا خلال الفترة فقط
             if (holidays.Contains(day))
             {
                 res.IsHoliday = true;
-                res.IsPresent = true;
+                res.IsPresent = hasRealAttendance;
                 results.Add(res);
                 continue;
             }
 
-            // 2) عطلة نهاية الأسبوع (يوم غير عمل): تُحتسب حضورًا للجميع
+            // 2) عطلة نهاية الأسبوع (يوم غير عمل): تُحتسب حضورًا لمن حضر فعلًا فقط
             if (!res.IsWorkingDay)
             {
-                res.IsPresent = true;
+                res.IsPresent = hasRealAttendance;
                 results.Add(res);
                 continue;
             }
