@@ -23,21 +23,30 @@ public class ReportsController : Controller
     private async Task PopulateGroups(int? selected)
         => ViewBag.Groups = new SelectList(await _db.EmployeeGroups.AsNoTracking().ToListAsync(), "Id", "Name", selected);
 
-    private (DateOnly from, DateOnly to) DefaultMonth()
-    {
-        var now = _clock.Now;
-        return (new DateOnly(now.Year, now.Month, 1), DateOnly.FromDateTime(now));
-    }
+    /// <summary>تحويل قيمة حقل شهر (yyyy-MM) إلى أول يوم في الشهر.</summary>
+    private static DateOnly? ParseMonth(string? ym) =>
+        DateOnly.TryParseExact((ym ?? string.Empty) + "-01", "yyyy-MM-dd",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var d) ? d : null;
 
     [HttpGet]
-    public async Task<IActionResult> Payroll(int? groupId, DateOnly? from, DateOnly? to)
+    public async Task<IActionResult> Payroll(int? groupId, string? fromMonth, string? toMonth)
     {
-        var (df, dt) = DefaultMonth();
-        from ??= df;
-        to ??= dt;
+        var now = _clock.Now;
+        var today = DateOnly.FromDateTime(now);
+
+        // الاختيار بالشهور: من أول يوم في "من شهر" إلى آخر يوم في "إلى شهر"
+        var fm = ParseMonth(fromMonth) ?? new DateOnly(now.Year, now.Month, 1);
+        var tm = ParseMonth(toMonth) ?? fm;
+        if (tm < fm) tm = fm;
+
+        var from = fm;
+        var to = tm.AddMonths(1).AddDays(-1);
+        // لا نتجاوز اليوم الحالي حتى لا تُحتسب الأيام المقبلة غيابًا
+        if (to > today) to = today;
 
         await PopulateGroups(groupId);
-        var report = await _reports.BuildAsync(groupId, from.Value, to.Value);
+        var report = await _reports.BuildAsync(groupId, from, to);
         return View(report);
     }
 

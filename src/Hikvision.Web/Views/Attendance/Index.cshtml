@@ -27,9 +27,18 @@
     var hasManual = Model.Any(r => r.Source == AttendanceSource.Manual);
 }
 
+<div class="print-only print-header">
+    <h3>سجلات الحضور</h3>
+    <p>
+        @if (ViewBag.EmployeeName is string empName) { <text>الموظف: @empName · </text> }
+        الفترة: @(fFrom?.ToString("yyyy-MM-dd")) — @(fTo?.ToString("yyyy-MM-dd")) · عدد السجلات: @Model.Count()
+    </p>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>سجلات الحضور</h2>
     <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
         @if (hasManual)
         {
             <form asp-action="DeleteManualFiltered" method="post" class="d-inline"

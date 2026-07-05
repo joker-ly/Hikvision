@@ -4,6 +4,11 @@
 }
 <h2 class="mb-3">تقرير الحضور والمرتبات</h2>
 
+<div class="print-only print-header">
+    <h3>تقرير الحضور والمرتبات</h3>
+    <p>الفترة: @Model.From.ToString("yyyy-MM-dd") — @Model.To.ToString("yyyy-MM-dd") · عدد الموظفين: @Model.Rows.Count</p>
+</div>
+
 <form method="get" class="row g-2 align-items-end mb-3 card card-body">
     <div class="col-md-3">
         <label class="form-label">المجموعة</label>
@@ -12,12 +17,12 @@
         </select>
     </div>
     <div class="col-md-3">
-        <label class="form-label">من تاريخ</label>
-        <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control" />
+        <label class="form-label">من شهر</label>
+        <input type="month" name="fromMonth" value="@Model.From.ToString("yyyy-MM")" class="form-control" />
     </div>
     <div class="col-md-3">
-        <label class="form-label">إلى تاريخ</label>
-        <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control" />
+        <label class="form-label">إلى شهر</label>
+        <input type="month" name="toMonth" value="@Model.To.ToString("yyyy-MM")" class="form-control" />
     </div>
     <div class="col-md-3">
         <button type="submit" class="btn btn-primary">عرض</button>
@@ -25,6 +30,7 @@
            asp-action="ExportCsv" asp-route-groupId="@Model.GroupId" asp-route-from="@Model.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.To.ToString("yyyy-MM-dd")"><i class="bi bi-filetype-csv"></i> CSV</a>
         <a class="btn btn-outline-success"
            asp-action="ExportXlsx" asp-route-groupId="@Model.GroupId" asp-route-from="@Model.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.To.ToString("yyyy-MM-dd")"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
     </div>
 </form>
 

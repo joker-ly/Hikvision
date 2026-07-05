@@ -44,6 +44,10 @@ public class AttendanceController : Controller
             await _db.Employees.AsNoTracking().OrderBy(e => e.FullName).ToListAsync(),
             "Id", "FullName", employeeId);
         ViewBag.EmployeeId = employeeId;
+        ViewBag.EmployeeName = employeeId.HasValue
+            ? await _db.Employees.Where(e => e.Id == employeeId.Value)
+                .Select(e => e.FullName).FirstOrDefaultAsync()
+            : null;
         ViewBag.From = from;
         ViewBag.To = to;
         ViewBag.Source = source;
