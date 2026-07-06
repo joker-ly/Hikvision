@@ -212,7 +212,8 @@ public class AttendanceSyncService : IAttendanceSyncService
     private async Task<List<AcsEventInfo>> FetchAllEventsAsync(
         DateTimeOffset start, DateTimeOffset end, CancellationToken ct)
     {
-        var parallelism = Math.Clamp(_config.GetValue("Device:SyncParallelism", 4), 1, 16);
+        // الافتراضي 1 (متسلسل): بعض الطرفيات (مثل DS-K1T342) ترفض الاتصالات المتوازية بـ401.
+        var parallelism = Math.Clamp(_config.GetValue("Device:SyncParallelism", 1), 1, 16);
 
         // مسار متسلسل بسيط (السلوك الأصلي)
         if (parallelism <= 1 || end <= start)
