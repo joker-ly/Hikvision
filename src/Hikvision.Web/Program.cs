@@ -55,6 +55,7 @@ else
 builder.Services.AddScoped<IAttendanceSyncService, AttendanceSyncService>();
 builder.Services.AddScoped<IAttendanceCalculationService, AttendanceCalculationService>();
 builder.Services.AddScoped<IPayrollReportService, PayrollReportService>();
+builder.Services.AddScoped<IStatisticsReportService, StatisticsReportService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Hikvision.Web.Services.Audit.IAuditLogger, Hikvision.Web.Services.Audit.AuditLogger>();
 
