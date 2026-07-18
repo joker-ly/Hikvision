@@ -65,12 +65,15 @@ public class StatisticsReportService : IStatisticsReportService
             var present = days.Count(d => d.IsPresent);
             var absent = days.Count - present;
 
+            var isExempt = emp.Group!.IsFingerprintExempt;
+
             var row = new EmployeeStatsRow
             {
                 EmployeeId = emp.Id,
                 FullName = emp.FullName,
                 FinancialNo = emp.FinancialNo,
                 GroupName = emp.Group!.Name,
+                IsExempt = isExempt,
                 PeriodDays = days.Count,
                 DaysPresent = present,
                 DaysAbsent = absent,
@@ -90,14 +93,21 @@ public class StatisticsReportService : IStatisticsReportService
             {
                 var agg = daily[d.Date];
                 agg.Counted++;
+                // المعفيون من البصمة يُجمعون في عمودهم ولا يدخلون الحاضرين/الغائبين
+                if (isExempt)
+                {
+                    agg.Exempt++;
+                    continue;
+                }
                 if (d.IsPresent) agg.Present++;
                 else agg.Absent++;
                 if (d.IsLate) agg.Late++;
             }
         }
 
+        // النسبة من غير المعفيين: الحاضرون الفعليون ÷ (المحسوبون − المعفيون)
         foreach (var d in daily.Values)
-            d.PresenceRate = Rate(d.Present, d.Counted);
+            d.PresenceRate = Rate(d.Present, d.Counted - d.Exempt);
         stats.Daily = daily.Values.OrderBy(d => d.Date).ToList();
 
         stats.Groups = stats.Employees
@@ -222,7 +232,7 @@ public class StatisticsReportService : IStatisticsReportService
         // ورقة 2: الحضور اليومي
         var wsD = wb.Worksheets.Add("الحضور اليومي");
         wsD.RightToLeft = true;
-        WriteHeaders(wsD, new[] { "التاريخ", "اليوم", "عطلة رسمية", "حاضرون", "غائبون", "متأخرون", "المحسوبون", "نسبة الحضور %" });
+        WriteHeaders(wsD, new[] { "التاريخ", "اليوم", "عطلة رسمية", "حاضرون (بصمة)", "غائبون", "متأخرون", "معفيون", "المحسوبون", "نسبة الحضور %" });
         row = 2;
         foreach (var d in stats.Daily)
         {
@@ -232,8 +242,9 @@ public class StatisticsReportService : IStatisticsReportService
             wsD.Cell(row, 4).Value = d.Present;
             wsD.Cell(row, 5).Value = d.Absent;
             wsD.Cell(row, 6).Value = d.Late;
-            wsD.Cell(row, 7).Value = d.Counted;
-            wsD.Cell(row, 8).Value = d.PresenceRate;
+            wsD.Cell(row, 7).Value = d.Exempt;
+            wsD.Cell(row, 8).Value = d.Counted;
+            wsD.Cell(row, 9).Value = d.PresenceRate;
             row++;
         }
         wsD.Columns().AdjustToContents();

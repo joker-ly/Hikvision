@@ -6,7 +6,8 @@
         .OrderByDescending(e => e.AbsenceRate).ThenByDescending(e => e.DaysAbsent).Take(10).ToList();
     var topLate = Model.Employees.Where(e => e.LateCount > 0)
         .OrderByDescending(e => e.TotalLateMinutes).Take(10).ToList();
-    var topPresent = Model.Employees
+    // المعفون من البصمة حضورهم محتسب تلقائيًا — يُستبعدون من قائمة الانضباط
+    var topPresent = Model.Employees.Where(e => !e.IsExempt)
         .OrderByDescending(e => e.PresenceRate).ThenBy(e => e.DaysAbsent).Take(10).ToList();
 
     void StatCard(string label, string value, string soft, string icon)
@@ -217,13 +218,13 @@
 
 @* ===== الحضور اليومي ===== *@
 <div class="card table-card mb-4" style="max-width:900px;">
-    <div class="card-header"><i class="bi bi-calendar3"></i> الحضور اليومي</div>
+    <div class="card-header"><i class="bi bi-calendar3"></i> الحضور اليومي <small class="text-muted">— الحاضرون من واقع البصمة (بدون المعفيين)</small></div>
     <div class="table-responsive" style="max-height:420px;overflow:auto">
         <table class="table table-sm table-hover mb-0">
             <thead>
                 <tr>
                     <th>التاريخ</th><th>اليوم</th><th>حاضرون</th><th>غائبون</th>
-                    <th>متأخرون</th><th>نسبة الحضور %</th>
+                    <th>متأخرون</th><th>معفيون</th><th>نسبة الحضور %</th>
                 </tr>
             </thead>
             <tbody>
@@ -235,6 +236,7 @@
                         <td>@d.Present</td>
                         <td>@d.Absent</td>
                         <td>@d.Late</td>
+                        <td>@d.Exempt</td>
                         <td>@d.PresenceRate</td>
                     </tr>
                 }

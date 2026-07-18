@@ -35,6 +35,9 @@ public class EmployeeStatsRow
     public string? FinancialNo { get; set; }
     public string GroupName { get; set; } = string.Empty;
 
+    /// <summary>عضو مجموعة معفاة من البصمة (حضوره محتسب تلقائيًا).</summary>
+    public bool IsExempt { get; set; }
+
     /// <summary>أيام الفترة المحسوبة له (باستثناء ما بعد تاريخ الإعفاء).</summary>
     public int PeriodDays { get; set; }
     public int DaysPresent { get; set; }
@@ -57,11 +60,15 @@ public class DailyStatsRow
     public DateOnly Date { get; set; }
     public string DayName { get; set; } = string.Empty;
     public bool IsHoliday { get; set; }
+    /// <summary>الحاضرون من واقع الاحتساب الفعلي (بدون المعفيين من البصمة).</summary>
     public int Present { get; set; }
     public int Absent { get; set; }
     public int Late { get; set; }
-    /// <summary>عدد الموظفين المحسوبين في هذا اليوم.</summary>
+    /// <summary>أعضاء المجموعات المعفاة من البصمة (يُجمعون هنا ولا يدخلون الحاضرين).</summary>
+    public int Exempt { get; set; }
+    /// <summary>عدد الموظفين المحسوبين في هذا اليوم (يشمل المعفيين).</summary>
     public int Counted { get; set; }
+    /// <summary>النسبة من غير المعفيين: حاضرون ÷ (المحسوبون − المعفيون).</summary>
     public decimal PresenceRate { get; set; }
 }
 
