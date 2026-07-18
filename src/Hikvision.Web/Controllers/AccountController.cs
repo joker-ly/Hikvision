@@ -67,4 +67,8 @@ public class AccountController : Controller
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToAction(nameof(Login));
     }
+
+    /// <summary>تظهر عند محاولة الوصول لنافذة/إجراء بلا صلاحية.</summary>
+    [HttpGet]
+    public IActionResult Denied() => View();
 }

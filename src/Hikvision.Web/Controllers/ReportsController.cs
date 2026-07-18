@@ -4,6 +4,8 @@ using Hikvision.Web.Services.TimeZoneSupport;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -49,6 +51,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Payroll, PermAction.View)]
     public async Task<IActionResult> Payroll(int? groupId, string? fromMonth, string? toMonth)
     {
         var (from, to) = ResolveMonthRange(fromMonth, toMonth);
@@ -58,6 +61,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Statistics, PermAction.View)]
     public async Task<IActionResult> Statistics(int? groupId, string? fromMonth, string? toMonth)
     {
         var (from, to) = ResolveMonthRange(fromMonth, toMonth);
@@ -67,6 +71,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Statistics, PermAction.View)]
     public async Task<IActionResult> ExportStatsCsv(int? groupId, DateOnly from, DateOnly to)
     {
         var stats = await _stats.BuildAsync(groupId, from, to);
@@ -75,6 +80,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Statistics, PermAction.View)]
     public async Task<IActionResult> ExportStatsXlsx(int? groupId, DateOnly from, DateOnly to)
     {
         var stats = await _stats.BuildAsync(groupId, from, to);
@@ -85,6 +91,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Payroll, PermAction.View)]
     public async Task<IActionResult> ExportCsv(int? groupId, DateOnly from, DateOnly to)
     {
         var report = await _reports.BuildAsync(groupId, from, to);
@@ -93,6 +100,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Payroll, PermAction.View)]
     public async Task<IActionResult> ExportXlsx(int? groupId, DateOnly from, DateOnly to)
     {
         var report = await _reports.BuildAsync(groupId, from, to);

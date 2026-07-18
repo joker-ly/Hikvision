@@ -57,6 +57,7 @@ builder.Services.AddScoped<IAttendanceCalculationService, AttendanceCalculationS
 builder.Services.AddScoped<IPayrollReportService, PayrollReportService>();
 builder.Services.AddScoped<IStatisticsReportService, StatisticsReportService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<Hikvision.Web.Services.Auth.IPermissionService, Hikvision.Web.Services.Auth.PermissionService>();
 builder.Services.AddScoped<Hikvision.Web.Services.Audit.IAuditLogger, Hikvision.Web.Services.Audit.AuditLogger>();
 
 // المزامنة المجدولة اليومية (خدمة خلفية)

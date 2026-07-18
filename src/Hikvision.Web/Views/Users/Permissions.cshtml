@@ -1,0 +1,69 @@
+@model Hikvision.Web.ViewModels.Users.PermissionsViewModel
+@{
+    ViewData["Title"] = "صلاحيات المستخدم";
+}
+<h2>صلاحيات: @Model.Username</h2>
+
+@if (Model.IsAdmin)
+{
+    <div class="alert alert-info mt-3" style="max-width:760px;">
+        هذا المستخدم <strong>مدير نظام</strong> ويملك كل الصلاحيات تلقائيًا — لا حاجة لضبط مفصّل.
+    </div>
+    <a asp-action="Index" class="btn btn-secondary">رجوع</a>
+}
+else
+{
+    <p class="text-muted">حدّد لكل نافذة ما يستطيع المستخدم فعله. من لا يملك "عرض" لا تظهر له النافذة إطلاقًا.</p>
+
+    <form asp-action="Permissions" method="post" style="max-width:760px;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="UserId" />
+        <input type="hidden" asp-for="Username" />
+
+        <div class="card table-card mb-3">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>النافذة</th>
+                            <th class="text-center">عرض <input type="checkbox" class="form-check-input col-toggle" data-col="View" title="تحديد الكل" /></th>
+                            <th class="text-center">إضافة <input type="checkbox" class="form-check-input col-toggle" data-col="Create" title="تحديد الكل" /></th>
+                            <th class="text-center">تعديل <input type="checkbox" class="form-check-input col-toggle" data-col="Edit" title="تحديد الكل" /></th>
+                            <th class="text-center">حذف <input type="checkbox" class="form-check-input col-toggle" data-col="Delete" title="تحديد الكل" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Rows.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Rows[i].ModuleName
+                                    <input type="hidden" asp-for="Rows[i].Module" />
+                                </td>
+                                <td class="text-center"><input type="checkbox" asp-for="Rows[i].CanView" class="form-check-input perm-View" /></td>
+                                <td class="text-center"><input type="checkbox" asp-for="Rows[i].CanCreate" class="form-check-input perm-Create" /></td>
+                                <td class="text-center"><input type="checkbox" asp-for="Rows[i].CanEdit" class="form-check-input perm-Edit" /></td>
+                                <td class="text-center"><input type="checkbox" asp-for="Rows[i].CanDelete" class="form-check-input perm-Delete" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> حفظ الصلاحيات</button>
+        <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+    </form>
+}
+
+@section Scripts {
+    <script>
+        // "تحديد الكل" لكل عمود
+        document.querySelectorAll('.col-toggle').forEach(function (t) {
+            t.addEventListener('change', function () {
+                document.querySelectorAll('.perm-' + t.dataset.col)
+                    .forEach(cb => cb.checked = t.checked);
+            });
+        });
+    </script>
+}

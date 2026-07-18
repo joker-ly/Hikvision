@@ -3,6 +3,8 @@ using Hikvision.Web.Models.Entities;
 using Hikvision.Web.Services.Audit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -17,10 +19,12 @@ public class HolidaysController : Controller
         _audit = audit;
     }
 
+    [Perm(AppModule.Holidays, PermAction.View)]
     public async Task<IActionResult> Index()
         => View(await _db.Holidays.AsNoTracking().OrderByDescending(h => h.StartDate).ToListAsync());
 
     [HttpGet]
+    [Perm(AppModule.Holidays, PermAction.Create)]
     public IActionResult Create()
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
@@ -29,6 +33,7 @@ public class HolidaysController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Holidays, PermAction.Create)]
     public async Task<IActionResult> Create([Bind("StartDate,EndDate,Description")] Holiday model)
     {
         if (model.EndDate < model.StartDate)
@@ -44,6 +49,7 @@ public class HolidaysController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Holidays, PermAction.Edit)]
     public async Task<IActionResult> Edit(int id)
     {
         var h = await _db.Holidays.FindAsync(id);
@@ -53,6 +59,7 @@ public class HolidaysController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Holidays, PermAction.Edit)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,StartDate,EndDate,Description")] Holiday model)
     {
         if (id != model.Id) return NotFound();
@@ -73,6 +80,7 @@ public class HolidaysController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Holidays, PermAction.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var h = await _db.Holidays.FindAsync(id);

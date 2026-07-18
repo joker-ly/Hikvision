@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<SyncLog> SyncLogs => Set<SyncLog>();
     public DbSet<Holiday> Holidays => Set<Holiday>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -23,6 +24,15 @@ public class AppDbContext : DbContext
 
         b.Entity<AppUser>()
             .HasIndex(u => u.Username).IsUnique();
+
+        b.Entity<UserPermission>()
+            .HasOne(p => p.User)
+            .WithMany(u => u.Permissions)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.Entity<UserPermission>()
+            .HasIndex(p => new { p.UserId, p.Module }).IsUnique();
 
         b.Entity<EmployeeGroup>()
             .HasMany(g => g.Employees)

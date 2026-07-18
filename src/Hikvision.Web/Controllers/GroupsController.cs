@@ -2,6 +2,8 @@ using Hikvision.Web.Data;
 using Hikvision.Web.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -15,6 +17,7 @@ public class GroupsController : Controller
         _audit = audit;
     }
 
+    [Perm(AppModule.Groups, PermAction.View)]
     public async Task<IActionResult> Index()
     {
         var groups = await _db.EmployeeGroups
@@ -25,10 +28,12 @@ public class GroupsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Groups, PermAction.Create)]
     public IActionResult Create() => View(new EmployeeGroup());
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Groups, PermAction.Create)]
     public async Task<IActionResult> Create([Bind("Name,Description,IsTimeBound,CalculationMode,IsFingerprintExempt")] EmployeeGroup model)
     {
         if (!ModelState.IsValid) return View(model);
@@ -50,6 +55,7 @@ public class GroupsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Groups, PermAction.Edit)]
     public async Task<IActionResult> Edit(int id)
     {
         var group = await _db.EmployeeGroups.FindAsync(id);
@@ -59,6 +65,7 @@ public class GroupsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Groups, PermAction.Edit)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,IsTimeBound,CalculationMode,IsFingerprintExempt")] EmployeeGroup model)
     {
         if (id != model.Id) return NotFound();
@@ -81,6 +88,7 @@ public class GroupsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Groups, PermAction.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var group = await _db.EmployeeGroups.Include(g => g.Employees).FirstOrDefaultAsync(g => g.Id == id);

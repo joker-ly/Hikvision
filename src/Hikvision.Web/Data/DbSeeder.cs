@@ -29,10 +29,19 @@ public static class DbSeeder
             {
                 Username = config["Admin:Username"] ?? "admin",
                 DisplayName = config["Admin:DisplayName"] ?? "مدير النظام",
-                IsActive = true
+                IsActive = true,
+                IsAdmin = true
             };
             user.PasswordHash = hasher.HashPassword(user, config["Admin:Password"] ?? "ChangeMe123!");
             db.Users.Add(user);
+        }
+        else if (!await db.Users.AnyAsync(u => u.IsAdmin))
+        {
+            // ترقية قاعدة قديمة: تعيين المستخدم الأول (أو المطابق لإعداد Admin) مديرًا
+            var adminName = config["Admin:Username"] ?? "admin";
+            var admin = await db.Users.FirstOrDefaultAsync(u => u.Username == adminName)
+                        ?? await db.Users.OrderBy(u => u.Id).FirstOrDefaultAsync();
+            if (admin is not null) admin.IsAdmin = true;
         }
 
         // 2) المجموعات الافتراضية + الورديات
@@ -120,7 +129,20 @@ ALTER TABLE [WorkSchedules] ADD [CheckoutGraceMinutes] int NOT NULL CONSTRAINT [
 IF COL_LENGTH(N'[EmployeeGroups]', N'IsFingerprintExempt') IS NULL
 ALTER TABLE [EmployeeGroups] ADD [IsFingerprintExempt] bit NOT NULL CONSTRAINT [DF_EmployeeGroups_IsFingerprintExempt] DEFAULT 0;
 IF COL_LENGTH(N'[Employees]', N'ExemptionDate') IS NULL
-ALTER TABLE [Employees] ADD [ExemptionDate] date NULL;";
+ALTER TABLE [Employees] ADD [ExemptionDate] date NULL;
+IF COL_LENGTH(N'[Users]', N'IsAdmin') IS NULL
+ALTER TABLE [Users] ADD [IsAdmin] bit NOT NULL CONSTRAINT [DF_Users_IsAdmin] DEFAULT 0;
+IF OBJECT_ID(N'[UserPermissions]', N'U') IS NULL
+CREATE TABLE [UserPermissions] (
+    [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [UserId] int NOT NULL,
+    [Module] int NOT NULL,
+    [CanView] bit NOT NULL DEFAULT 0,
+    [CanCreate] bit NOT NULL DEFAULT 0,
+    [CanEdit] bit NOT NULL DEFAULT 0,
+    [CanDelete] bit NOT NULL DEFAULT 0,
+    CONSTRAINT [FK_UserPermissions_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users]([Id]) ON DELETE CASCADE
+);";
         try
         {
             await db.Database.ExecuteSqlRawAsync(sql);

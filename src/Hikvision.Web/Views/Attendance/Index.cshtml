@@ -1,6 +1,9 @@
 @model IEnumerable<AttendanceRecord>
+@inject Hikvision.Web.Services.Auth.IPermissionService Perms
 @{
     ViewData["Title"] = "سجلات الحضور";
+    var canDeleteRec = await Perms.HasAsync(AppModule.Attendance, PermAction.Delete);
+    var canManualEntry = await Perms.HasAsync(AppModule.ManualAttendance, PermAction.View);
 
     string DirText(PunchDirection d) => d switch
     {
@@ -39,7 +42,7 @@
     <h2>سجلات الحضور</h2>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
-        @if (hasManual)
+        @if (canDeleteRec && hasManual)
         {
             <form asp-action="DeleteManualFiltered" method="post" class="d-inline"
                   onsubmit="return confirm('سيتم حذف كل السجلات اليدوية ضمن التصفية الحالية نهائيًا. متابعة؟');">
@@ -51,7 +54,10 @@
                 <button type="submit" class="btn btn-outline-danger">🗑 حذف السجلات اليدوية (حسب التصفية)</button>
             </form>
         }
-        <a asp-controller="ManualAttendance" asp-action="Create" class="btn btn-success">+ إدخال يدوي</a>
+        @if (canManualEntry)
+        {
+            <a asp-controller="ManualAttendance" asp-action="Create" class="btn btn-success">+ إدخال يدوي</a>
+        }
     </div>
 </div>
 
@@ -118,7 +124,7 @@
                 <td>@(r.Source == AttendanceSource.Manual ? ManualText(r.ManualType) : "—")</td>
                 <td>@r.Note</td>
                 <td class="page-actions">
-                    @if (r.Source == AttendanceSource.Manual)
+                    @if (canDeleteRec && r.Source == AttendanceSource.Manual)
                     {
                         <form asp-action="DeleteManual" method="post" class="d-inline"
                               onsubmit="return confirm('تأكيد حذف هذا السجل اليدوي؟');">

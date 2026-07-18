@@ -6,6 +6,7 @@ using Hikvision.Web.Services.TimeZoneSupport;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -22,6 +23,7 @@ public class AttendanceController : Controller
         _audit = audit;
     }
 
+    [Perm(AppModule.Attendance, PermAction.View)]
     public async Task<IActionResult> Index(int? employeeId, DateOnly? from, DateOnly? to, AttendanceSource? source)
     {
         from ??= DateOnly.FromDateTime(_clock.Now).AddDays(-30);
@@ -58,6 +60,7 @@ public class AttendanceController : Controller
     // حذف سجل يدوي واحد (لا يُسمح بحذف سجلات الجهاز من هنا)
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Attendance, PermAction.Delete)]
     public async Task<IActionResult> DeleteManual(int id, int? employeeId, DateOnly? from, DateOnly? to, AttendanceSource? source)
     {
         var rec = await _db.AttendanceRecords.FirstOrDefaultAsync(r => r.Id == id);
@@ -79,6 +82,7 @@ public class AttendanceController : Controller
     // حذف كل السجلات اليدوية ضمن التصفية الحالية (الموظف + المدى الزمني)
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Attendance, PermAction.Delete)]
     public async Task<IActionResult> DeleteManualFiltered(int? employeeId, DateOnly? from, DateOnly? to, AttendanceSource? source)
     {
         from ??= DateOnly.FromDateTime(_clock.Now).AddDays(-30);

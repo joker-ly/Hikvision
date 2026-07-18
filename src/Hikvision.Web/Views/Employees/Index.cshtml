@@ -1,6 +1,13 @@
 @model IEnumerable<Employee>
+@using Hikvision.Web.Models.Enums
+@inject Hikvision.Web.Services.Auth.IPermissionService Perms
 @{
     ViewData["Title"] = "الموظفون";
+    var canCreate = await Perms.HasAsync(AppModule.Employees, PermAction.Create);
+    var canEdit = await Perms.HasAsync(AppModule.Employees, PermAction.Edit);
+    var canDelete = await Perms.HasAsync(AppModule.Employees, PermAction.Delete);
+    var canManual = await Perms.HasAsync(AppModule.ManualAttendance, PermAction.View);
+    var canAttendance = await Perms.HasAsync(AppModule.Attendance, PermAction.View);
     var sort = ViewBag.Sort as string ?? "name";
     var search = ViewBag.Search as string;
     var nameSort = sort == "name" ? "name_desc" : "name";
@@ -13,8 +20,11 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>الموظفون</h2>
     <div class="d-flex gap-2">
-        <a asp-action="Create" class="btn btn-primary">+ إضافة موظف</a>
-        @if (Model.Any())
+        @if (canCreate)
+        {
+            <a asp-action="Create" class="btn btn-primary">+ إضافة موظف</a>
+        }
+        @if (canDelete && Model.Any())
         {
             <form asp-action="DeleteAll" method="post" class="d-inline"
                   onsubmit="return confirm('سيتم حذف جميع الموظفين وسجلات حضورهم نهائيًا. هل أنت متأكد؟');">
@@ -25,6 +35,8 @@
     </div>
 </div>
 
+@if (canCreate)
+{
 <div class="card shadow-sm mb-3">
     <div class="card-body">
         <form asp-action="ImportFromDevice" method="post" class="row g-2 align-items-end"
@@ -42,6 +54,7 @@
         </form>
     </div>
 </div>
+}
 
 <form asp-action="Index" method="get" class="row g-2 mb-3" style="max-width:560px;">
     <input type="hidden" name="sort" value="@sort" />
@@ -85,13 +98,25 @@
                 <td>@(e.BaseSalary?.ToString("N2") ?? "—")</td>
                 <td>@(e.IsActive ? Html.Raw("<span class='badge bg-soft-success'>نعم</span>") : Html.Raw("<span class='badge bg-soft-danger'>لا</span>"))</td>
                 <td class="page-actions">
-                    <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary" title="تعديل"><i class="bi bi-pencil"></i></a>
-                    <a asp-controller="ManualAttendance" asp-action="Create" asp-route-employeeId="@e.Id" target="_blank" class="btn btn-sm btn-outline-success" title="إدخال يدوي"><i class="bi bi-pencil-square"></i></a>
-                    <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info" title="سجلات الحضور"><i class="bi bi-card-checklist"></i></a>
-                    <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline" onsubmit="return confirm('تأكيد حذف الموظف؟');">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                    </form>
+                    @if (canEdit)
+                    {
+                        <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-secondary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                    }
+                    @if (canManual)
+                    {
+                        <a asp-controller="ManualAttendance" asp-action="Create" asp-route-employeeId="@e.Id" target="_blank" class="btn btn-sm btn-outline-success" title="إدخال يدوي"><i class="bi bi-pencil-square"></i></a>
+                    }
+                    @if (canAttendance)
+                    {
+                        <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info" title="سجلات الحضور"><i class="bi bi-card-checklist"></i></a>
+                    }
+                    @if (canDelete)
+                    {
+                        <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline" onsubmit="return confirm('تأكيد حذف الموظف؟');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    }
                 </td>
             </tr>
         }

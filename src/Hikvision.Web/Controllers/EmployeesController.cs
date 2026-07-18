@@ -5,6 +5,8 @@ using Hikvision.Web.Services.Hikvision;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -24,6 +26,7 @@ public class EmployeesController : Controller
     private async Task PopulateGroups(int? selected = null)
         => ViewBag.Groups = new SelectList(await _db.EmployeeGroups.AsNoTracking().ToListAsync(), "Id", "Name", selected);
 
+    [Perm(AppModule.Employees, PermAction.View)]
     public async Task<IActionResult> Index(string? sort, string? search)
     {
         var query = _db.Employees.Include(e => e.Group).AsNoTracking();
@@ -58,6 +61,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Employees, PermAction.Create)]
     public async Task<IActionResult> ImportFromDevice(int groupId)
     {
         if (!await _db.EmployeeGroups.AnyAsync(g => g.Id == groupId))
@@ -111,6 +115,7 @@ public class EmployeesController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Employees, PermAction.Create)]
     public async Task<IActionResult> Create()
     {
         await PopulateGroups();
@@ -119,6 +124,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Employees, PermAction.Create)]
     public async Task<IActionResult> Create([Bind("EmployeeGroupId,DeviceEmployeeNo,FinancialNo,FullName,NationalId,IsActive,BaseSalary,HireDate")] Employee model)
     {
         if (await _db.Employees.AnyAsync(e => e.DeviceEmployeeNo == model.DeviceEmployeeNo))
@@ -138,6 +144,7 @@ public class EmployeesController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Employees, PermAction.Edit)]
     public async Task<IActionResult> Edit(int id)
     {
         var emp = await _db.Employees.FindAsync(id);
@@ -148,6 +155,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Employees, PermAction.Edit)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,EmployeeGroupId,DeviceEmployeeNo,FinancialNo,FullName,NationalId,IsActive,BaseSalary,HireDate,ExemptionDate")] Employee model)
     {
         if (id != model.Id) return NotFound();
@@ -182,6 +190,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Employees, PermAction.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var emp = await _db.Employees.FindAsync(id);
@@ -195,6 +204,7 @@ public class EmployeesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Employees, PermAction.Delete)]
     public async Task<IActionResult> DeleteAll()
     {
         // تُحذف سجلات الحضور المرتبطة أولًا ثم جميع الموظفين

@@ -1,4 +1,6 @@
 @using System.Security.Claims
+@using Hikvision.Web.Models.Enums
+@inject Hikvision.Web.Services.Auth.IPermissionService Perms
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     string Active(params string[] controllers) =>
@@ -34,21 +36,74 @@ else
                 <button type="button" class="btn btn-sm btn-dark d-lg-none ms-auto sidebar-close"><i class="bi bi-x-lg"></i></button>
             </div>
             <nav class="sidebar-nav">
-                <a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
-                <div class="nav-section">إدارة</div>
-                <a class="nav-link @Active("Groups")" asp-controller="Groups" asp-action="Index"><i class="bi bi-diagram-3"></i> المجموعات</a>
-                <a class="nav-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-clock-history"></i> مواعيد الدوام</a>
-                <a class="nav-link @Active("Employees")" asp-controller="Employees" asp-action="Index"><i class="bi bi-people"></i> الموظفون</a>
-                <a class="nav-link @Active("Holidays")" asp-controller="Holidays" asp-action="Index"><i class="bi bi-calendar-event"></i> الإجازات الرسمية</a>
-                <div class="nav-section">الحضور</div>
-                <a class="nav-link @Active("Attendance")" asp-controller="Attendance" asp-action="Index"><i class="bi bi-card-checklist"></i> سجلات الحضور</a>
-                <a class="nav-link @Active("ManualAttendance")" asp-controller="ManualAttendance" asp-action="Create"><i class="bi bi-pencil-square"></i> إدخال يدوي</a>
-                <a class="nav-link @Active("Sync")" asp-controller="Sync" asp-action="Index"><i class="bi bi-arrow-repeat"></i> المزامنة مع الجهاز</a>
-                <div class="nav-section">تقارير ونظام</div>
-                <a class="nav-link @Active("Reports")" asp-controller="Reports" asp-action="Payroll"><i class="bi bi-bar-chart"></i> تقرير المرتبات</a>
-                <a class="nav-link" asp-controller="Reports" asp-action="Statistics"><i class="bi bi-graph-up"></i> الإحصائيات</a>
-                <a class="nav-link @Active("Audit")" asp-controller="Audit" asp-action="Index"><i class="bi bi-shield-check"></i> سجل العمليات</a>
-                <a class="nav-link @Active("Settings")" asp-controller="Settings" asp-action="Device"><i class="bi bi-gear"></i> الإعدادات</a>
+                @if (await Perms.CanViewAsync(AppModule.Dashboard))
+                {
+                    <a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Groups) || await Perms.CanViewAsync(AppModule.Schedules) ||
+                     await Perms.CanViewAsync(AppModule.Employees) || await Perms.CanViewAsync(AppModule.Holidays))
+                {
+                    <div class="nav-section">إدارة</div>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Groups))
+                {
+                    <a class="nav-link @Active("Groups")" asp-controller="Groups" asp-action="Index"><i class="bi bi-diagram-3"></i> المجموعات</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Schedules))
+                {
+                    <a class="nav-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-clock-history"></i> مواعيد الدوام</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Employees))
+                {
+                    <a class="nav-link @Active("Employees")" asp-controller="Employees" asp-action="Index"><i class="bi bi-people"></i> الموظفون</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Holidays))
+                {
+                    <a class="nav-link @Active("Holidays")" asp-controller="Holidays" asp-action="Index"><i class="bi bi-calendar-event"></i> الإجازات الرسمية</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Attendance) || await Perms.CanViewAsync(AppModule.ManualAttendance) ||
+                     await Perms.CanViewAsync(AppModule.Sync))
+                {
+                    <div class="nav-section">الحضور</div>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Attendance))
+                {
+                    <a class="nav-link @Active("Attendance")" asp-controller="Attendance" asp-action="Index"><i class="bi bi-card-checklist"></i> سجلات الحضور</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.ManualAttendance))
+                {
+                    <a class="nav-link @Active("ManualAttendance")" asp-controller="ManualAttendance" asp-action="Create"><i class="bi bi-pencil-square"></i> إدخال يدوي</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Sync))
+                {
+                    <a class="nav-link @Active("Sync")" asp-controller="Sync" asp-action="Index"><i class="bi bi-arrow-repeat"></i> المزامنة مع الجهاز</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Payroll) || await Perms.CanViewAsync(AppModule.Statistics) ||
+                     await Perms.CanViewAsync(AppModule.Audit) || await Perms.CanViewAsync(AppModule.Settings) ||
+                     await Perms.CanViewAsync(AppModule.Users))
+                {
+                    <div class="nav-section">تقارير ونظام</div>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Payroll))
+                {
+                    <a class="nav-link @Active("Reports")" asp-controller="Reports" asp-action="Payroll"><i class="bi bi-bar-chart"></i> تقرير المرتبات</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Statistics))
+                {
+                    <a class="nav-link" asp-controller="Reports" asp-action="Statistics"><i class="bi bi-graph-up"></i> الإحصائيات</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Audit))
+                {
+                    <a class="nav-link @Active("Audit")" asp-controller="Audit" asp-action="Index"><i class="bi bi-shield-check"></i> سجل العمليات</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Settings))
+                {
+                    <a class="nav-link @Active("Settings")" asp-controller="Settings" asp-action="Device"><i class="bi bi-gear"></i> الإعدادات</a>
+                }
+                @if (await Perms.CanViewAsync(AppModule.Users))
+                {
+                    <a class="nav-link @Active("Users")" asp-controller="Users" asp-action="Index"><i class="bi bi-person-gear"></i> المستخدمون</a>
+                }
             </nav>
         </aside>
 

@@ -1,6 +1,8 @@
 using Hikvision.Web.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -9,6 +11,7 @@ public class AuditController : Controller
     private readonly AppDbContext _db;
     public AuditController(AppDbContext db) => _db = db;
 
+    [Perm(AppModule.Audit, PermAction.View)]
     public async Task<IActionResult> Index(int page = 1)
     {
         const int pageSize = 100;

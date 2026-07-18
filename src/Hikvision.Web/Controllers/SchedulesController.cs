@@ -2,6 +2,8 @@ using Hikvision.Web.Data;
 using Hikvision.Web.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -10,6 +12,7 @@ public class SchedulesController : Controller
     private readonly AppDbContext _db;
     public SchedulesController(AppDbContext db) => _db = db;
 
+    [Perm(AppModule.Schedules, PermAction.View)]
     public async Task<IActionResult> Index()
     {
         var groups = await _db.EmployeeGroups
@@ -19,6 +22,7 @@ public class SchedulesController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Schedules, PermAction.Edit)]
     public async Task<IActionResult> Edit(int groupId)
     {
         var group = await _db.EmployeeGroups
@@ -35,6 +39,7 @@ public class SchedulesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Schedules, PermAction.Edit)]
     public async Task<IActionResult> Edit(WorkSchedule model)
     {
         var group = await _db.EmployeeGroups

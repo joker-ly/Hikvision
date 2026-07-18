@@ -3,6 +3,8 @@ using Hikvision.Web.Services.Audit;
 using Hikvision.Web.Services.Sync;
 using Hikvision.Web.Services.TimeZoneSupport;
 using Microsoft.AspNetCore.Mvc;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -27,6 +29,7 @@ public class SyncController : Controller
     private string LogsDir => Path.Combine(_env.ContentRootPath, "logs");
 
     [HttpGet]
+    [Perm(AppModule.Sync, PermAction.View)]
     public async Task<IActionResult> Index()
     {
         ViewBag.ScheduleEnabled = _config.GetValue("Sync:Enabled", true);
@@ -51,6 +54,7 @@ public class SyncController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Sync, PermAction.Create)]
     public async Task<IActionResult> Run(DateTime? from, DateTime? to)
     {
         var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : (int?)null;
@@ -93,6 +97,7 @@ public class SyncController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Sync, PermAction.View)]
     public IActionResult DownloadLog(string name)
     {
         // حماية من اجتياز المسارات: نسمح فقط باسم ملف بسيط ضمن مجلد logs

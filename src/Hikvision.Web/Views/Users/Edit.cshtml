@@ -1,0 +1,39 @@
+@model Hikvision.Web.ViewModels.Users.UserFormViewModel
+@{
+    ViewData["Title"] = "تعديل مستخدم";
+}
+<h2>تعديل مستخدم</h2>
+
+<form asp-action="Edit" method="post" class="mt-3" style="max-width:560px;">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Username" class="form-label"></label>
+        <input asp-for="Username" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Username" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="DisplayName" class="form-label"></label>
+        <input asp-for="DisplayName" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="اتركها فارغة للإبقاء على كلمة المرور الحالية" />
+    </div>
+    <div class="form-check mb-2">
+        <input asp-for="IsAdmin" class="form-check-input" />
+        <label asp-for="IsAdmin" class="form-check-label"></label>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-primary">حفظ</button>
+    @if (!Model.IsAdmin)
+    {
+        <a asp-action="Permissions" asp-route-id="@Model.Id" class="btn btn-outline-primary"><i class="bi bi-shield-check"></i> الصلاحيات</a>
+    }
+    <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

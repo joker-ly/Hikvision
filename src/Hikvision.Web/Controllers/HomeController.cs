@@ -5,6 +5,7 @@ using Hikvision.Web.Services.TimeZoneSupport;
 using Hikvision.Web.ViewModels.Home;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -21,6 +22,7 @@ public class HomeController : Controller
         _clock = clock;
     }
 
+    [Perm(AppModule.Dashboard, PermAction.View)]
     public async Task<IActionResult> Index()
     {
         var today = _clock.Now.Date;

@@ -17,4 +17,9 @@ public class AppUser
     public string DisplayName { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>مدير النظام: يملك كل الصلاحيات ويدير المستخدمين.</summary>
+    public bool IsAdmin { get; set; }
+
+    public ICollection<UserPermission> Permissions { get; set; } = new List<UserPermission>();
 }

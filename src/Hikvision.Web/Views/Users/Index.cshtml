@@ -1,0 +1,58 @@
+@model IEnumerable<AppUser>
+@{
+    ViewData["Title"] = "المستخدمون";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>مستخدمو النظام</h2>
+    <a asp-action="Create" class="btn btn-primary">+ إضافة مستخدم</a>
+</div>
+
+<div class="card table-card" style="max-width:900px;">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+    <thead>
+        <tr>
+            <th>اسم المستخدم</th>
+            <th>الاسم الظاهر</th>
+            <th>النوع</th>
+            <th>نشط</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Username</td>
+                <td>@u.DisplayName</td>
+                <td>
+                    @if (u.IsAdmin)
+                    {
+                        <span class="badge bg-soft-primary">مدير نظام</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-soft-secondary">مستخدم بصلاحيات</span>
+                    }
+                </td>
+                <td>@(u.IsActive ? Html.Raw("<span class='badge bg-soft-success'>نعم</span>") : Html.Raw("<span class='badge bg-soft-danger'>لا</span>"))</td>
+                <td class="page-actions">
+                    <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-secondary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                    @if (!u.IsAdmin)
+                    {
+                        <a asp-action="Permissions" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary" title="الصلاحيات"><i class="bi bi-shield-check"></i> الصلاحيات</a>
+                    }
+                    <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline"
+                          onsubmit="return confirm('تأكيد حذف المستخدم @u.Username؟');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+</div>
+</div>
+<p class="text-muted mt-2">مدير النظام يملك كل الصلاحيات تلقائيًا. "مستخدم بصلاحيات" لا يرى إلا النوافذ الممنوحة له، ويُضبط لكل نافذة: عرض/إضافة/تعديل/حذف.</p>

@@ -7,6 +7,7 @@ using Hikvision.Web.ViewModels.ManualAttendance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -29,6 +30,7 @@ public class ManualAttendanceController : Controller
             "Id", "FullName", selected);
 
     [HttpGet]
+    [Perm(AppModule.ManualAttendance, PermAction.View)]
     public async Task<IActionResult> Create(int? employeeId)
     {
         await PopulateEmployees(employeeId);
@@ -43,6 +45,7 @@ public class ManualAttendanceController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.ManualAttendance, PermAction.Create)]
     public async Task<IActionResult> Create(ManualEntryViewModel model)
     {
         if (model.ManualType == ManualAttendanceType.None)

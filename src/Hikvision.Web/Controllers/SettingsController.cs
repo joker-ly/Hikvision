@@ -4,6 +4,8 @@ using Hikvision.Web.Services.Audit;
 using Hikvision.Web.Services.Hikvision;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Hikvision.Web.Models.Enums;
+using Hikvision.Web.Services.Auth;
 
 namespace Hikvision.Web.Controllers;
 
@@ -33,10 +35,12 @@ public class SettingsController : Controller
     }
 
     [HttpGet]
+    [Perm(AppModule.Settings, PermAction.View)]
     public async Task<IActionResult> Device() => View(await GetOrCreateAsync());
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Settings, PermAction.Edit)]
     public async Task<IActionResult> Device([Bind("Id,Host,Port,UseHttps,Username,Password")] DeviceConfig model)
     {
         if (!ModelState.IsValid) return View(model);
@@ -56,6 +60,7 @@ public class SettingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Perm(AppModule.Settings, PermAction.View)]
     public async Task<IActionResult> TestConnection()
     {
         var (ok, message) = await _client.TestConnectionAsync();
