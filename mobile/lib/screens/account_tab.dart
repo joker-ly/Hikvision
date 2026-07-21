@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import '../widgets/sync_banner.dart';
 import 'login.dart';
 
 class AccountTab extends StatefulWidget {
@@ -59,28 +60,51 @@ class _AccountTabState extends State<AccountTab> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const CircleAvatar(
-              radius: 36,
-              backgroundColor: Color(0xFF1E3A8A),
-              child: Icon(Icons.person, size: 40, color: Colors.white),
+            // بطاقة الملف الشخصي
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [Color(0xFF1E3A8A), Color(0xFF3B5BC0)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 34,
+                    backgroundColor: Colors.white.withOpacity(.2),
+                    child: const Icon(Icons.person, size: 38, color: Colors.white),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(s('fullName'),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('${s('groupName')} · رقم ${s('employeeNo')}',
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(.85), fontSize: 13)),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Center(
-                child: Text(s('fullName'),
-                    style: Theme.of(context).textTheme.titleLarge)),
-            const SizedBox(height: 16),
-            _InfoTile(Icons.badge, 'رقم الموظف', s('employeeNo')),
+            const SizedBox(height: 14),
+            const SyncBanner(),
             _InfoTile(Icons.account_balance, 'الرقم المالي', s('financialNo')),
-            _InfoTile(Icons.group, 'المجموعة', s('groupName')),
-            _InfoTile(Icons.schedule, 'الدوام',
+            _InfoTile(
+                Icons.schedule,
+                'الدوام',
                 d['scheduleStart'] != null
                     ? '${s('scheduleStart')} — ${s('scheduleEnd')} (سماح ${s('lateGraceMinutes')} د)'
                     : 'غير مقيّد بمواعيد'),
             _InfoTile(Icons.phone_android, 'هذا الجهاز',
                 '${d['deviceInfo'] ?? '—'}\nمرتبط منذ ${s('deviceBoundAt')}'),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
               onPressed: _logout,
               icon: const Icon(Icons.logout),
               label: const Text('تسجيل الخروج'),
@@ -101,9 +125,12 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF1E3A8A)),
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFF1E3A8A).withOpacity(.1),
+          child: Icon(icon, color: const Color(0xFF1E3A8A), size: 20),
+        ),
         title: Text(label,
             style: const TextStyle(fontSize: 12, color: Colors.grey)),
         subtitle: Text(value,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import '../widgets/sync_banner.dart';
 
 class TodayTab extends StatefulWidget {
   const TodayTab({super.key});
@@ -44,41 +45,99 @@ class _TodayTabState extends State<TodayTab> {
           final late = (d['lateMinutes'] as num?)?.toInt() ?? 0;
           final isWorkingDay = d['isWorkingDay'] == true;
 
+          // الحالة الرئيسية لبطاقة البطل
+          final (heroColor, heroIcon, heroTitle, heroSub) = !isWorkingDay
+              ? (Colors.blueGrey, Icons.weekend, 'يوم عطلة', 'اليوم ليس يوم عمل وفق ورديتك')
+              : firstIn == null
+                  ? (Colors.grey, Icons.hourglass_empty, 'لم تُسجَّل بصمة بعد', 'بانتظار بصمة الدخول أو المزامنة القادمة')
+                  : late > 0
+                      ? (Colors.orange, Icons.alarm, 'حضرت متأخرًا', 'تأخّرت $late دقيقة عن موعد الحضور')
+                      : (Colors.green, Icons.verified, 'حضور في الموعد', 'أحسنت! التزمت بموعد الدوام');
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text('اليوم ${d['date']}',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
-              if (!isWorkingDay)
-                const _StatusCard(
-                    icon: Icons.weekend,
-                    color: Colors.blueGrey,
-                    title: 'يوم عطلة',
-                    subtitle: 'اليوم ليس يوم عمل وفق ورديتك'),
-              _StatusCard(
-                icon: Icons.login,
-                color: firstIn != null ? Colors.green : Colors.grey,
-                title: 'أول دخول',
-                subtitle: firstIn ?? 'لم تُسجَّل بصمة دخول بعد',
+              const SyncBanner(),
+              // بطاقة الحالة الرئيسية
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    colors: [heroColor.shade600, heroColor.shade400],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: heroColor.withOpacity(.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.white.withOpacity(.25),
+                      child: Icon(heroIcon, color: Colors.white, size: 30),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(heroTitle,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(heroSub,
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(.9),
+                                  fontSize: 13)),
+                          const SizedBox(height: 6),
+                          Text('اليوم ${d['date']}',
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(.75),
+                                  fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              _StatusCard(
-                icon: Icons.logout,
-                color: lastOut != null ? Colors.teal : Colors.grey,
-                title: 'آخر خروج',
-                subtitle: lastOut ?? '—',
+              const SizedBox(height: 16),
+              // بطاقتا الدخول والخروج جنبًا إلى جنب
+              Row(
+                children: [
+                  Expanded(
+                    child: _TimeCard(
+                      icon: Icons.login,
+                      label: 'أول دخول',
+                      time: firstIn,
+                      color: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _TimeCard(
+                      icon: Icons.logout,
+                      label: 'آخر خروج',
+                      time: lastOut,
+                      color: Colors.teal,
+                    ),
+                  ),
+                ],
               ),
-              _StatusCard(
-                icon: late > 0 ? Icons.alarm : Icons.check_circle,
-                color: late > 0 ? Colors.orange : Colors.green,
-                title: late > 0 ? 'متأخر' : 'الالتزام بالموعد',
-                subtitle: late > 0 ? 'تأخّرت $late دقيقة عن موعد الحضور' : 'لا تأخير اليوم',
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'البيانات بحسب آخر مزامنة مع جهاز البصمة — اسحب للأسفل للتحديث.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  'اسحب الشاشة للأسفل لتحديث البيانات',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                ),
               ),
             ],
           );
@@ -88,29 +147,49 @@ class _TodayTabState extends State<TodayTab> {
   }
 }
 
-class _StatusCard extends StatelessWidget {
+class _TimeCard extends StatelessWidget {
   final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
+  final String label;
+  final String? time;
+  final MaterialColor color;
 
-  const _StatusCard(
+  const _TimeCard(
       {required this.icon,
-      required this.color,
-      required this.title,
-      required this.subtitle});
+      required this.label,
+      required this.time,
+      required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withOpacity(.15),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(title),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 16)),
+    final has = time != null;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blueGrey.shade50),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: (has ? color : Colors.grey).withOpacity(.12),
+            child: Icon(icon, color: has ? color : Colors.grey, size: 22),
+          ),
+          const SizedBox(height: 8),
+          Text(label,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text(
+            time ?? '—',
+            textDirection: TextDirection.ltr,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: has ? Colors.black87 : Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }

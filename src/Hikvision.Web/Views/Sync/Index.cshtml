@@ -5,14 +5,16 @@
     var defTo = (DateTime)ViewBag.DefaultTo;
     var logFiles = ViewBag.LogFiles as List<string> ?? new List<string>();
     var scheduleEnabled = (bool)(ViewBag.ScheduleEnabled ?? true);
-    var scheduleTime = ViewBag.ScheduleTime as string ?? "14:30";
+    var syncInterval = (int)(ViewBag.SyncInterval ?? 15);
+    var windowStart = ViewBag.WindowStart as string ?? "08:00";
+    var windowEnd = ViewBag.WindowEnd as string ?? "15:00";
 }
 
 <div class="alert @(scheduleEnabled ? "alert-info" : "alert-secondary") d-flex align-items-center gap-2">
     <i class="bi bi-clock"></i>
     @if (scheduleEnabled)
     {
-        <span>المزامنة الآلية مفعّلة يوميًا عند الساعة <strong>@scheduleTime</strong>. وإذا كان التطبيق متوقفًا عند الموعد، تُنفَّذ تلقائيًا عند تشغيله لاحقًا.</span>
+        <span>المزامنة الآلية مفعّلة <strong>كل @syncInterval دقيقة</strong> من الساعة <strong>@windowStart</strong> حتى <strong>@windowEnd</strong>، مع مزامنة إغلاق واحدة بعد نهاية الفترة لالتقاط بصمات الخروج المتأخرة.</span>
     }
     else
     {

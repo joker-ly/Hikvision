@@ -6,6 +6,43 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+/// إعدادات المزامنة الدورية كما يعلنها الخادم.
+class SyncInfo {
+  final int intervalMinutes;
+  final (int, int) windowStart; // (ساعة, دقيقة)
+  final (int, int) windowEnd;
+
+  const SyncInfo(
+      {required this.intervalMinutes,
+      required this.windowStart,
+      required this.windowEnd});
+
+  factory SyncInfo.defaults() => const SyncInfo(
+      intervalMinutes: 15, windowStart: (8, 0), windowEnd: (15, 0));
+
+  DateTime startOf(DateTime day) =>
+      DateTime(day.year, day.month, day.day, windowStart.$1, windowStart.$2);
+  DateTime endOf(DateTime day) =>
+      DateTime(day.year, day.month, day.day, windowEnd.$1, windowEnd.$2);
+
+  /// موعد المزامنة القادمة، أو null إن انتهت مزامنات اليوم (التالية غدًا).
+  DateTime nextSync(DateTime now) {
+    final start = startOf(now);
+    final end = endOf(now);
+    if (now.isBefore(start)) return start;
+    if (!now.isBefore(end)) return startOf(now.add(const Duration(days: 1)));
+    final elapsed = now.difference(start).inSeconds;
+    final slot = (elapsed ~/ (intervalMinutes * 60)) + 1;
+    final next = start.add(Duration(minutes: slot * intervalMinutes));
+    return next.isAfter(end) ? end : next;
+  }
+
+  String get windowLabel =>
+      '${_fmt(windowStart)} — ${_fmt(windowEnd)}';
+  static String _fmt((int, int) t) =>
+      '${t.$1.toString().padLeft(2, '0')}:${t.$2.toString().padLeft(2, '0')}';
+}
+
 /// استثناء يحمل رسالة خطأ عربية قادمة من الخادم.
 class ApiException implements Exception {
   final String message;
@@ -89,6 +126,38 @@ class Api {
         .get(Uri.parse('$u/api/portal/ping'))
         .timeout(const Duration(seconds: 6));
     return resp.statusCode == 200;
+  }
+
+  /// إعدادات المزامنة من الخادم (لمؤقّت "المزامنة القادمة") مع قيم افتراضية.
+  static SyncInfo _syncInfo = SyncInfo.defaults();
+  static SyncInfo get syncInfo => _syncInfo;
+
+  static Future<void> refreshSyncInfo() async {
+    try {
+      final resp = await http
+          .get(_uri('/ping'))
+          .timeout(const Duration(seconds: 6));
+      final d = _decode(resp);
+      _syncInfo = SyncInfo(
+        intervalMinutes: (d['syncIntervalMinutes'] as num?)?.toInt() ?? 15,
+        windowStart: _parseTime(d['syncWindowStart'] as String?, 8, 0),
+        windowEnd: _parseTime(d['syncWindowEnd'] as String?, 15, 0),
+      );
+    } catch (_) {
+      // نبقى على القيم الافتراضية عند تعذّر الاتصال
+    }
+  }
+
+  static (int, int) _parseTime(String? v, int h, int m) {
+    if (v != null) {
+      final parts = v.split(':');
+      if (parts.length == 2) {
+        final ph = int.tryParse(parts[0]);
+        final pm = int.tryParse(parts[1]);
+        if (ph != null && pm != null) return (ph, pm);
+      }
+    }
+    return (h, m);
   }
 
   static Future<void> login(String employeeNo, String pin) async {

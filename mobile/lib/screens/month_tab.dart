@@ -86,17 +86,57 @@ class _MonthTabState extends State<MonthTab> {
 
               int n(String k) => (d[k] as num?)?.toInt() ?? 0;
               final rate = (d['presenceRate'] as num?)?.toDouble() ?? 0;
+              final rateColor = rate >= 90
+                  ? Colors.green
+                  : rate >= 75
+                      ? Colors.orange
+                      : Colors.red;
 
-              return GridView.count(
+              final rateHeader = Container(
+                margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blueGrey.shade50),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('نسبة الحضور',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        Text('$rate%',
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: rateColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: (rate / 100).clamp(0.0, 1.0),
+                        minHeight: 10,
+                        backgroundColor: Colors.blueGrey.shade50,
+                        valueColor: AlwaysStoppedAnimation(rateColor),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              final grid = GridView.count(
                 padding: const EdgeInsets.all(16),
                 crossAxisCount: 2,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.5,
                 children: [
-                  _Tile('نسبة الحضور', '$rate%',
-                      rate >= 90 ? Colors.green : rate >= 75 ? Colors.orange : Colors.red,
-                      Icons.percent),
                   _Tile('أيام الحضور', '${n('presentDays')} / ${n('periodDays')}',
                       Colors.green, Icons.check_circle),
                   _Tile('أيام الغياب', '${n('absentDays')}',
@@ -109,7 +149,14 @@ class _MonthTabState extends State<MonthTab> {
                       Colors.blue, Icons.schedule),
                   _Tile('إجازات', '${n('leaveDays')}', Colors.teal, Icons.beach_access),
                   _Tile('مهام عمل', '${n('missionDays')}', Colors.indigo, Icons.work),
+                  _Tile('إجازة بدون مرتب', '${n('unpaidLeaveDays')}',
+                      n('unpaidLeaveDays') > 0 ? Colors.deepOrange : Colors.grey,
+                      Icons.money_off),
                 ],
+              );
+
+              return Column(
+                children: [rateHeader, Expanded(child: grid)],
               );
             },
           ),

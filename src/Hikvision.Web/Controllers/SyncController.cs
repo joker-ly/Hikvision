@@ -33,7 +33,9 @@ public class SyncController : Controller
     public async Task<IActionResult> Index()
     {
         ViewBag.ScheduleEnabled = _config.GetValue("Sync:Enabled", true);
-        ViewBag.ScheduleTime = _config["Sync:DailyTime"] ?? "14:30";
+        ViewBag.SyncInterval = _config.GetValue("Sync:IntervalMinutes", 15);
+        ViewBag.WindowStart = _config["Sync:WindowStart"] ?? "08:00";
+        ViewBag.WindowEnd = _config["Sync:WindowEnd"] ?? "15:00";
         ViewBag.LastSync = await _sync.GetLastSyncAsync();
         ViewBag.DefaultFrom = (ViewBag.LastSync as Hikvision.Web.Models.Entities.SyncLog)?.ToTime
             ?? _clock.Now.AddDays(-7);

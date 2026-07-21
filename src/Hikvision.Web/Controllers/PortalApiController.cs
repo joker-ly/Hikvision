@@ -42,9 +42,16 @@ public class PortalApiController : ControllerBase
 
     public record LoginRequest(string EmployeeNo, string Pin, string DeviceId, string? DeviceInfo);
 
-    /// <summary>فحص وصول التطبيق للخادم (يُستخدم في شاشة إعداد الخادم).</summary>
+    /// <summary>فحص وصول التطبيق للخادم + إعدادات المزامنة (لمؤقّت التطبيق).</summary>
     [HttpGet("ping")]
-    public IActionResult Ping() => Ok(new { ok = true, name = "HikvisionAttendance" });
+    public IActionResult Ping([FromServices] IConfiguration config) => Ok(new
+    {
+        ok = true,
+        name = "HikvisionAttendance",
+        syncIntervalMinutes = config.GetValue("Sync:IntervalMinutes", 15),
+        syncWindowStart = config["Sync:WindowStart"] ?? "08:00",
+        syncWindowEnd = config["Sync:WindowEnd"] ?? "15:00"
+    });
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken ct)

@@ -25,13 +25,60 @@ class PortalApp extends StatelessWidget {
       start = const HomeShell();
     }
 
+    const brand = Color(0xFF1E3A8A);
     return MaterialApp(
       title: 'حضوري',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
+        colorScheme: ColorScheme.fromSeed(seedColor: brand),
         useMaterial3: true,
-        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: const Color(0xFFF4F6FB),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: brand,
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          elevation: 0,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.blueGrey.shade50),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.blueGrey.shade100),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.blueGrey.shade100),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: brand, width: 1.6),
+          ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14)),
+            textStyle:
+                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: Colors.white,
+          indicatorColor: brand.withOpacity(.12),
+          labelTextStyle: WidgetStatePropertyAll(
+            TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
       ),
       builder: (context, child) =>
           Directionality(textDirection: TextDirection.rtl, child: child!),
