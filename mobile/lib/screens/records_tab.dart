@@ -88,8 +88,11 @@ class _RecordsTabState extends State<RecordsTab> {
                 handleAuthError(context, snap.error!);
                 return ConnectionErrorView(
                   error: snap.error!,
-                  onRetry: () async =>
-                      setState(() => _future = Api.records(_year, _month)),
+                  onRetry: () async {
+                    setState(() {
+                      _future = Api.records(_year, _month);
+                    });
+                  },
                 );
               }
               final records = (snap.data!['records'] as List).cast<Map<String, dynamic>>();

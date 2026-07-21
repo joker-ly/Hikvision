@@ -80,8 +80,11 @@ class _MonthTabState extends State<MonthTab> {
                 handleAuthError(context, snap.error!);
                 return ConnectionErrorView(
                   error: snap.error!,
-                  onRetry: () async =>
-                      setState(() => _future = Api.summary(_year, _month)),
+                  onRetry: () async {
+                    setState(() {
+                      _future = Api.summary(_year, _month);
+                    });
+                  },
                 );
               }
               final d = snap.data!;

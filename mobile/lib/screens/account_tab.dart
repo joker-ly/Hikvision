@@ -55,7 +55,11 @@ class _AccountTabState extends State<AccountTab> {
           handleAuthError(context, snap.error!);
           return ConnectionErrorView(
             error: snap.error!,
-            onRetry: () async => setState(() => _future = Api.me()),
+            onRetry: () async {
+              setState(() {
+                _future = Api.me();
+              });
+            },
           );
         }
         final d = snap.data!;

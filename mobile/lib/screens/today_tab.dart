@@ -22,7 +22,10 @@ class _TodayTabState extends State<TodayTab> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = Api.today());
+    // ملاحظة: يجب ألّا يُعيد closure الخاص بـ setState قيمة Future
+    setState(() {
+      _future = Api.today();
+    });
     await _future;
   }
 
