@@ -71,7 +71,7 @@ class _TodayTabState extends State<TodayTab> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: heroColor.withOpacity(.3),
+                      color: heroColor.withValues(alpha: .3),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     ),
@@ -81,7 +81,7 @@ class _TodayTabState extends State<TodayTab> {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor: Colors.white.withOpacity(.25),
+                      backgroundColor: Colors.white.withValues(alpha: .25),
                       child: Icon(heroIcon, color: Colors.white, size: 30),
                     ),
                     const SizedBox(width: 14),
@@ -97,12 +97,12 @@ class _TodayTabState extends State<TodayTab> {
                           const SizedBox(height: 4),
                           Text(heroSub,
                               style: TextStyle(
-                                  color: Colors.white.withOpacity(.9),
+                                  color: Colors.white.withValues(alpha: .9),
                                   fontSize: 13)),
                           const SizedBox(height: 6),
                           Text('اليوم ${d['date']}',
                               style: TextStyle(
-                                  color: Colors.white.withOpacity(.75),
+                                  color: Colors.white.withValues(alpha: .75),
                                   fontSize: 12)),
                         ],
                       ),
@@ -174,7 +174,7 @@ class _TimeCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: (has ? color : Colors.grey).withOpacity(.12),
+            backgroundColor: (has ? color : Colors.grey).withValues(alpha: .12),
             child: Icon(icon, color: has ? color : Colors.grey, size: 22),
           ),
           const SizedBox(height: 8),

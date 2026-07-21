@@ -141,16 +141,14 @@ class Api {
     }
   }
 
-  /// طلب مصادقة البصمة/الوجه من النظام.
+  /// طلب مصادقة البصمة/الوجه من النظام (local_auth 3.x: المعاملات مباشرة).
   static Future<bool> biometricAuthenticate() async {
     try {
       final auth = LocalAuthentication();
       return await auth.authenticate(
         localizedReason: 'استخدم بصمتك للدخول إلى حضوري',
-        options: const AuthenticationOptions(
-          biometricOnly: false,
-          stickyAuth: true,
-        ),
+        biometricOnly: false,
+        persistAcrossBackgrounding: true,
       );
     } catch (_) {
       return false;

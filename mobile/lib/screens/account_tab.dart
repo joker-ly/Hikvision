@@ -79,7 +79,7 @@ class _AccountTabState extends State<AccountTab> {
                 children: [
                   CircleAvatar(
                     radius: 34,
-                    backgroundColor: Colors.white.withOpacity(.2),
+                    backgroundColor: Colors.white.withValues(alpha: .2),
                     child: const Icon(Icons.person, size: 38, color: Colors.white),
                   ),
                   const SizedBox(height: 10),
@@ -91,7 +91,7 @@ class _AccountTabState extends State<AccountTab> {
                   const SizedBox(height: 4),
                   Text('${s('groupName')} · رقم ${s('employeeNo')}',
                       style: TextStyle(
-                          color: Colors.white.withOpacity(.85), fontSize: 13)),
+                          color: Colors.white.withValues(alpha: .85), fontSize: 13)),
                 ],
               ),
             ),
@@ -168,7 +168,7 @@ class _InfoTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFF1E3A8A).withOpacity(.1),
+          backgroundColor: const Color(0xFF1E3A8A).withValues(alpha: .1),
           child: Icon(icon, color: const Color(0xFF1E3A8A), size: 20),
         ),
         title: Text(label,

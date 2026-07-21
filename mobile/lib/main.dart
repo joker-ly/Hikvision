@@ -43,7 +43,7 @@ class PortalApp extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           color: Colors.white,
           shape: RoundedRectangleBorder(
@@ -78,7 +78,7 @@ class PortalApp extends StatelessWidget {
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
-          indicatorColor: brand.withOpacity(.12),
+          indicatorColor: brand.withValues(alpha: .12),
           labelTextStyle: WidgetStatePropertyAll(
             TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
