@@ -214,4 +214,50 @@ public class EmployeesController : Controller
         TempData["Success"] = $"تم حذف جميع الموظفين ({count}) وسجلات حضورهم. يمكنك الآن إعادة الاستيراد بالتوزيع الصحيح.";
         return RedirectToAction(nameof(Index));
     }
+
+    // ==== بوابة الموظفين (تطبيق الهاتف) ====
+
+    /// <summary>إصدار/إعادة تعيين الرقم السري لدخول التطبيق — يُعرض مرة واحدة فقط.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Perm(AppModule.Employees, PermAction.Edit)]
+    public async Task<IActionResult> IssuePin(int id)
+    {
+        var emp = await _db.Employees.FindAsync(id);
+        if (emp is null) return NotFound();
+
+        var pin = System.Security.Cryptography.RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+        emp.PinHash = new Microsoft.AspNetCore.Identity.PasswordHasher<Employee>().HashPassword(emp, pin);
+        emp.PinFailedCount = 0;
+        emp.PinLockedUntilUtc = null;
+        // إبطال جلسات التطبيق الحالية
+        emp.ApiTokenHash = null;
+        emp.ApiTokenExpiresUtc = null;
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("إصدار رقم سري للتطبيق", $"{emp.FullName} (رقم جهاز {emp.DeviceEmployeeNo}).");
+
+        TempData["Success"] = $"الرقم السري للموظف {emp.FullName} هو: {pin} — سلّمه له الآن؛ لن يُعرض مرة أخرى.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>إعادة تعيين جهاز الموظف — أول جهاز يدخل بعدها يُربط بالحساب.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Perm(AppModule.Employees, PermAction.Edit)]
+    public async Task<IActionResult> ResetDevice(int id)
+    {
+        var emp = await _db.Employees.FindAsync(id);
+        if (emp is null) return NotFound();
+
+        emp.DeviceId = null;
+        emp.DeviceInfo = null;
+        emp.DeviceBoundAtUtc = null;
+        emp.ApiTokenHash = null;
+        emp.ApiTokenExpiresUtc = null;
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("إعادة تعيين جهاز الموظف", $"{emp.FullName} (رقم جهاز {emp.DeviceEmployeeNo}).");
+
+        TempData["Success"] = $"تمت إعادة تعيين جهاز {emp.FullName} — أول جهاز يسجّل دخولًا سيُربط بحسابه.";
+        return RedirectToAction(nameof(Index));
+    }
 }

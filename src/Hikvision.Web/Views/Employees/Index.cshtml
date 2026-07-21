@@ -84,6 +84,7 @@
             <th><a asp-action="Index" asp-route-sort="@grpSort" asp-route-search="@search" class="text-decoration-none text-reset">المجموعة @grpArrow</a></th>
             <th>الراتب الأساسي</th>
             <th>نشط</th>
+            <th>التطبيق</th>
             <th></th>
         </tr>
     </thead>
@@ -97,6 +98,20 @@
                 <td>@e.Group?.Name</td>
                 <td>@(e.BaseSalary?.ToString("N2") ?? "—")</td>
                 <td>@(e.IsActive ? Html.Raw("<span class='badge bg-soft-success'>نعم</span>") : Html.Raw("<span class='badge bg-soft-danger'>لا</span>"))</td>
+                <td>
+                    @if (e.PinHash is not null)
+                    {
+                        <span class="badge bg-soft-success" title="رقم سري صادر"><i class="bi bi-key"></i></span>
+                    }
+                    @if (e.DeviceId is not null)
+                    {
+                        <span class="badge bg-soft-info" title="جهاز مرتبط: @(e.DeviceInfo ?? "غير معروف")"><i class="bi bi-phone"></i></span>
+                    }
+                    @if (e.PinHash is null && e.DeviceId is null)
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </td>
                 <td class="page-actions">
                     @if (canEdit)
                     {
@@ -109,6 +124,22 @@
                     @if (canAttendance)
                     {
                         <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@e.Id" class="btn btn-sm btn-outline-info" title="سجلات الحضور"><i class="bi bi-card-checklist"></i></a>
+                    }
+                    @if (canEdit)
+                    {
+                        <form asp-action="IssuePin" asp-route-id="@e.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('إصدار رقم سري جديد للموظف @e.FullName؟ سيُلغى الرقم السابق وجلسات تطبيقه.');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-warning" title="إصدار رقم سري للتطبيق"><i class="bi bi-key"></i></button>
+                        </form>
+                        @if (e.DeviceId is not null)
+                        {
+                            <form asp-action="ResetDevice" asp-route-id="@e.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('إعادة تعيين جهاز @e.FullName؟ سيُسمح لأول جهاز جديد بالارتباط بالحساب.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-dark" title="إعادة تعيين الجهاز"><i class="bi bi-phone-flip"></i></button>
+                            </form>
+                        }
                     }
                     @if (canDelete)
                     {

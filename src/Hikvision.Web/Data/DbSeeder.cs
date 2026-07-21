@@ -132,6 +132,22 @@ IF COL_LENGTH(N'[Employees]', N'ExemptionDate') IS NULL
 ALTER TABLE [Employees] ADD [ExemptionDate] date NULL;
 IF COL_LENGTH(N'[Users]', N'IsAdmin') IS NULL
 ALTER TABLE [Users] ADD [IsAdmin] bit NOT NULL CONSTRAINT [DF_Users_IsAdmin] DEFAULT 0;
+IF COL_LENGTH(N'[Employees]', N'PinHash') IS NULL
+ALTER TABLE [Employees] ADD [PinHash] nvarchar(max) NULL;
+IF COL_LENGTH(N'[Employees]', N'PinFailedCount') IS NULL
+ALTER TABLE [Employees] ADD [PinFailedCount] int NOT NULL CONSTRAINT [DF_Employees_PinFailedCount] DEFAULT 0;
+IF COL_LENGTH(N'[Employees]', N'PinLockedUntilUtc') IS NULL
+ALTER TABLE [Employees] ADD [PinLockedUntilUtc] datetime2 NULL;
+IF COL_LENGTH(N'[Employees]', N'DeviceId') IS NULL
+ALTER TABLE [Employees] ADD [DeviceId] nvarchar(64) NULL;
+IF COL_LENGTH(N'[Employees]', N'DeviceInfo') IS NULL
+ALTER TABLE [Employees] ADD [DeviceInfo] nvarchar(300) NULL;
+IF COL_LENGTH(N'[Employees]', N'DeviceBoundAtUtc') IS NULL
+ALTER TABLE [Employees] ADD [DeviceBoundAtUtc] datetime2 NULL;
+IF COL_LENGTH(N'[Employees]', N'ApiTokenHash') IS NULL
+ALTER TABLE [Employees] ADD [ApiTokenHash] nvarchar(100) NULL;
+IF COL_LENGTH(N'[Employees]', N'ApiTokenExpiresUtc') IS NULL
+ALTER TABLE [Employees] ADD [ApiTokenExpiresUtc] datetime2 NULL;
 IF OBJECT_ID(N'[UserPermissions]', N'U') IS NULL
 CREATE TABLE [UserPermissions] (
     [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,

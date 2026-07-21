@@ -46,5 +46,32 @@ public class Employee
     [DataType(DataType.Date)]
     public DateOnly? ExemptionDate { get; set; }
 
+    // ==== بوابة الموظف (تطبيق الهاتف) ====
+
+    /// <summary>الرقم السري لدخول التطبيق (Hash فقط). فارغ = لم يُصدر بعد.</summary>
+    public string? PinHash { get; set; }
+
+    /// <summary>عدّاد محاولات الدخول الفاشلة (للقفل المؤقت).</summary>
+    public int PinFailedCount { get; set; }
+
+    /// <summary>مقفول عن الدخول حتى هذا الوقت (بعد محاولات فاشلة متكررة).</summary>
+    public DateTime? PinLockedUntilUtc { get; set; }
+
+    /// <summary>معرّف جهاز الهاتف الوحيد المسموح له بالدخول. فارغ = لم يُربط جهاز بعد.</summary>
+    [MaxLength(64)]
+    public string? DeviceId { get; set; }
+
+    /// <summary>وصف/طراز الجهاز المرتبط (للعرض للمدير).</summary>
+    [MaxLength(300)]
+    public string? DeviceInfo { get; set; }
+
+    public DateTime? DeviceBoundAtUtc { get; set; }
+
+    /// <summary>توكن جلسة التطبيق (SHA256).</summary>
+    [MaxLength(100)]
+    public string? ApiTokenHash { get; set; }
+
+    public DateTime? ApiTokenExpiresUtc { get; set; }
+
     public ICollection<AttendanceRecord> Records { get; set; } = new List<AttendanceRecord>();
 }

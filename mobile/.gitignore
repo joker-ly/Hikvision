@@ -1,0 +1,20 @@
+# مخرجات البناء وأدوات Flutter
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# مجلدات المنصات تُولَّد بأمر: flutter create .
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+
+# بيئات التطوير
+.idea/
+*.iml
+.vscode/

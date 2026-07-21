@@ -74,6 +74,34 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+// حارس الشبكة الداخلية لبوابة الموظفين: يقبل عناوين IP الخاصة فقط
+app.Use(async (ctx, next) =>
+{
+    if (ctx.Request.Path.StartsWithSegments("/api/portal") &&
+        ctx.RequestServices.GetRequiredService<IConfiguration>().GetValue("Portal:PrivateNetworkOnly", true))
+    {
+        var ip = ctx.Connection.RemoteIpAddress;
+        if (ip is not null && ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4();
+        var allowed = ip is not null && (
+            System.Net.IPAddress.IsLoopback(ip) ||
+            (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && IsPrivateIpv4(ip.GetAddressBytes())) ||
+            ip.IsIPv6LinkLocal);
+        if (!allowed)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await ctx.Response.WriteAsJsonAsync(new { error = "الوصول متاح من الشبكة الداخلية فقط." });
+            return;
+        }
+    }
+    await next();
+
+    static bool IsPrivateIpv4(byte[] b) =>
+        b[0] == 10 ||
+        (b[0] == 172 && b[1] >= 16 && b[1] <= 31) ||
+        (b[0] == 192 && b[1] == 168) ||
+        (b[0] == 169 && b[1] == 254);
+});
+
 // بوابة الإعداد: قبل اكتمال تهيئة القاعدة، توجَّه كل الطلبات إلى معالج الإعداد /Setup
 // (الملفات الثابتة تُخدَم قبل هذه النقطة فلا تتأثر).
 app.Use(async (ctx, next) =>
