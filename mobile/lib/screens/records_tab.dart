@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import '../widgets/error_view.dart';
 
 class RecordsTab extends StatefulWidget {
   const RecordsTab({super.key});
@@ -85,7 +86,11 @@ class _RecordsTabState extends State<RecordsTab> {
               }
               if (snap.hasError) {
                 handleAuthError(context, snap.error!);
-                return Center(child: Text(snap.error.toString()));
+                return ConnectionErrorView(
+                  error: snap.error!,
+                  onRetry: () async =>
+                      setState(() => _future = Api.records(_year, _month)),
+                );
               }
               final records = (snap.data!['records'] as List).cast<Map<String, dynamic>>();
               if (records.isEmpty) {

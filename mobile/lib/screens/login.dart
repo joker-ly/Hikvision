@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
-      setState(() => _error = 'تعذّر الاتصال بالخادم. تأكد أنك على شبكة الوزارة.');
+      setState(() => _error = Api.offlineMessage);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

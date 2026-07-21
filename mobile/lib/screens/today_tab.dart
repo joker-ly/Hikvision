@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import '../widgets/error_view.dart';
 import '../widgets/sync_banner.dart';
 
 class TodayTab extends StatefulWidget {
@@ -37,7 +38,7 @@ class _TodayTabState extends State<TodayTab> {
           }
           if (snap.hasError) {
             handleAuthError(context, snap.error!);
-            return _ErrorView(message: snap.error.toString(), onRetry: _refresh);
+            return ConnectionErrorView(error: snap.error!, onRetry: _refresh);
           }
           final d = snap.data!;
           final firstIn = d['firstIn'] as String?;
@@ -195,29 +196,3 @@ class _TimeCard extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final Future<void> Function() onRetry;
-  const _ErrorView({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        const SizedBox(height: 40),
-        const Icon(Icons.wifi_off, size: 56, color: Colors.grey),
-        const SizedBox(height: 12),
-        Text(message, textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        Center(
-          child: FilledButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('إعادة المحاولة'),
-          ),
-        ),
-      ],
-    );
-  }
-}

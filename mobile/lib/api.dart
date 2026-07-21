@@ -46,16 +46,33 @@ class SyncInfo {
 }
 
 /// استثناء يحمل رسالة خطأ عربية قادمة من الخادم.
+/// statusCode = 0 يعني تعذّر الوصول للخادم (خارج الشبكة).
 class ApiException implements Exception {
   final String message;
   final int statusCode;
   ApiException(this.message, this.statusCode);
+  bool get isOffline => statusCode == 0;
   @override
   String toString() => message;
 }
 
 /// عميل واجهة بوابة الموظفين — يدير عنوان الخادم والتوكن ومعرّف الجهاز.
 class Api {
+  /// الرسالة الموحّدة عند تعذّر الوصول للخادم.
+  static const offlineMessage =
+      'أنت خارج شبكة الوزارة، يرجى الاتصال بشبكة الوزارة لاستخدام التطبيق.';
+
+  /// يحوّل أي فشل شبكة (انقطاع/مهلة/رفض اتصال) إلى رسالة "خارج شبكة الوزارة".
+  static Future<T> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on ApiException {
+      rethrow; // خطأ من الخادم نفسه (بيانات خاطئة/جهاز آخر...) — رسالته كما هي
+    } catch (_) {
+      throw ApiException(offlineMessage, 0);
+    }
+  }
+
   static const _kServer = 'serverUrl';
   static const _kToken = 'token';
   static const _kDeviceId = 'deviceId';
@@ -155,7 +172,7 @@ class Api {
       }
       return e.message;
     } catch (_) {
-      return 'تعذّر الاتصال بالخادم. تأكد أنك على شبكة الوزارة.';
+      return offlineMessage;
     }
   }
 
@@ -239,29 +256,30 @@ class Api {
     return (h, m);
   }
 
-  static Future<void> login(String employeeNo, String pin) async {
-    final resp = await http
-        .post(_uri('/login'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'employeeNo': employeeNo,
-              'pin': pin,
-              'deviceId': await deviceId(),
-              'deviceInfo': await deviceDescription(),
-            }))
-        .timeout(const Duration(seconds: 10));
-    final data = _decode(resp);
-    await _prefs.setString(_kToken, data['token'] as String);
-    await _prefs.setString(_kName, data['fullName'] as String? ?? '');
-  }
+  static Future<void> login(String employeeNo, String pin) => _guard(() async {
+        final resp = await http
+            .post(_uri('/login'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                  'employeeNo': employeeNo,
+                  'pin': pin,
+                  'deviceId': await deviceId(),
+                  'deviceInfo': await deviceDescription(),
+                }))
+            .timeout(const Duration(seconds: 10));
+        final data = _decode(resp);
+        await _prefs.setString(_kToken, data['token'] as String);
+        await _prefs.setString(_kName, data['fullName'] as String? ?? '');
+      });
 
   static Future<Map<String, dynamic>> _get(String path,
-      [Map<String, String>? query]) async {
-    final resp = await http.get(_uri(path, query), headers: {
-      'Authorization': 'Bearer $token',
-    }).timeout(const Duration(seconds: 10));
-    return _decode(resp);
-  }
+          [Map<String, String>? query]) =>
+      _guard(() async {
+        final resp = await http.get(_uri(path, query), headers: {
+          'Authorization': 'Bearer $token',
+        }).timeout(const Duration(seconds: 10));
+        return _decode(resp);
+      });
 
   static Future<Map<String, dynamic>> today() => _get('/today');
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import '../widgets/error_view.dart';
 
 class MonthTab extends StatefulWidget {
   const MonthTab({super.key});
@@ -77,7 +78,11 @@ class _MonthTabState extends State<MonthTab> {
               }
               if (snap.hasError) {
                 handleAuthError(context, snap.error!);
-                return Center(child: Text(snap.error.toString()));
+                return ConnectionErrorView(
+                  error: snap.error!,
+                  onRetry: () async =>
+                      setState(() => _future = Api.summary(_year, _month)),
+                );
               }
               final d = snap.data!;
               if ((d['periodDays'] as num?)?.toInt() == 0) {

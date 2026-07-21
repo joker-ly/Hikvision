@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import '../widgets/error_view.dart';
 import '../widgets/sync_banner.dart';
 import 'login.dart';
 
@@ -52,7 +53,10 @@ class _AccountTabState extends State<AccountTab> {
         }
         if (snap.hasError) {
           handleAuthError(context, snap.error!);
-          return Center(child: Text(snap.error.toString()));
+          return ConnectionErrorView(
+            error: snap.error!,
+            onRetry: () async => setState(() => _future = Api.me()),
+          );
         }
         final d = snap.data!;
         String s(String k) => d[k]?.toString() ?? '—';
