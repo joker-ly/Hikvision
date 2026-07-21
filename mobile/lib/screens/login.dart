@@ -6,7 +6,9 @@ import 'home_shell.dart';
 import 'server_setup.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// عند true تُطلب البصمة تلقائيًا فور فتح الشاشة (إن كانت مفعّلة).
+  final bool autoBiometric;
+  const LoginScreen({super.key, this.autoBiometric = true});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -16,7 +18,59 @@ class _LoginScreenState extends State<LoginScreen> {
   final _noController = TextEditingController();
   final _pinController = TextEditingController();
   bool _busy = false;
+  bool _remember = true;
+  bool _canBiometric = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepare();
+  }
+
+  Future<void> _prepare() async {
+    // تعبئة رقم الموظف المحفوظ
+    final savedNo = await Api.savedEmployeeNo();
+    if (savedNo != null) _noController.text = savedNo;
+
+    // تفعيل زر البصمة إن توفرت بيانات محفوظة ودعم للجهاز
+    final creds = await Api.savedCredentials();
+    final supported = await Api.biometricsAvailable();
+    if (mounted) {
+      setState(() => _canBiometric =
+          creds != null && supported && Api.biometricEnabled);
+    }
+
+    // طلب البصمة تلقائيًا عند فتح الشاشة
+    if (_canBiometric && widget.autoBiometric) {
+      await _biometricLogin();
+    }
+  }
+
+  Future<void> _afterLoginOfferBiometric() async {
+    // اقتراح تفعيل الدخول بالبصمة بعد أول دخول ناجح ببيانات محفوظة
+    if (Api.biometricEnabled) return;
+    if (!await Api.biometricsAvailable()) return;
+    if (!mounted) return;
+
+    final enable = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('الدخول بالبصمة'),
+        content: const Text(
+            'هل تريد تفعيل الدخول ببصمة الإصبع/الوجه بدل إدخال البيانات في كل مرة؟'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('لاحقًا')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('تفعيل')),
+        ],
+      ),
+    );
+    if (enable == true) await Api.setBiometricEnabled(true);
+  }
 
   Future<void> _login() async {
     final no = _noController.text.trim();
@@ -31,6 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await Api.login(no, pin);
+      if (_remember) {
+        await Api.saveCredentials(no, pin);
+        await _afterLoginOfferBiometric();
+      } else {
+        await Api.clearCredentials();
+      }
       if (mounted) goTo(context, const HomeShell());
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -38,6 +98,25 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error = 'تعذّر الاتصال بالخادم. تأكد أنك على شبكة الوزارة.');
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _biometricLogin() async {
+    setState(() => _error = null);
+    final ok = await Api.biometricAuthenticate();
+    if (!ok) return;
+
+    setState(() => _busy = true);
+    final err = await Api.loginWithSaved();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (err == null) {
+      goTo(context, const HomeShell());
+    } else {
+      setState(() {
+        _error = err;
+        _canBiometric = false;
+      });
     }
   }
 
@@ -57,12 +136,36 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text('متابعة الحضور والانصراف',
                     style: TextStyle(color: Colors.grey)),
                 const SizedBox(height: 24),
+
+                // زر الدخول بالبصمة مباشرة
+                if (_canBiometric) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _busy ? null : _biometricLogin,
+                      icon: const Icon(Icons.fingerprint, size: 26),
+                      label: const Text('الدخول بالبصمة'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('أو أدخل بياناتك',
+                          style: TextStyle(
+                              color: Colors.grey.shade600, fontSize: 12)),
+                    ),
+                    const Expanded(child: Divider()),
+                  ]),
+                  const SizedBox(height: 16),
+                ],
+
                 TextField(
                   controller: _noController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'رقم الموظف (رقم البصمة)',
-                    border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.badge),
                   ),
                 ),
@@ -73,18 +176,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'الرقم السري',
-                    border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.password),
                   ),
                   onSubmitted: (_) => _login(),
                 ),
+                SwitchListTile(
+                  value: _remember,
+                  onChanged: (v) => setState(() => _remember = v),
+                  title: const Text('حفظ بيانات الدخول',
+                      style: TextStyle(fontSize: 14)),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                ),
                 if (_error != null) ...[
-                  const SizedBox(height: 12),
                   Text(_error!,
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 8),
                 ],
-                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(

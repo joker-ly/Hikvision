@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'api.dart';
 import 'screens/home_shell.dart';
+import 'screens/lock_screen.dart';
 import 'screens/login.dart';
 import 'screens/server_setup.dart';
 
@@ -21,6 +22,9 @@ class PortalApp extends StatelessWidget {
       start = const ServerSetupScreen();
     } else if (Api.token == null) {
       start = const LoginScreen();
+    } else if (Api.biometricEnabled) {
+      // جلسة سارية + بصمة مفعّلة → قفل بالبصمة قبل الدخول
+      start = const LockScreen();
     } else {
       start = const HomeShell();
     }

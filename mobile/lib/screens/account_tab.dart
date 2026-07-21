@@ -102,6 +102,42 @@ class _AccountTabState extends State<AccountTab> {
                     : 'غير مقيّد بمواعيد'),
             _InfoTile(Icons.phone_android, 'هذا الجهاز',
                 '${d['deviceInfo'] ?? '—'}\nمرتبط منذ ${s('deviceBoundAt')}'),
+            Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: SwitchListTile(
+                value: Api.biometricEnabled,
+                onChanged: (v) async {
+                  if (v) {
+                    final creds = await Api.savedCredentials();
+                    if (creds == null) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                'فعّل "حفظ بيانات الدخول" عند تسجيل الدخول أولًا.')));
+                      }
+                      return;
+                    }
+                    if (!await Api.biometricsAvailable()) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('جهازك لا يدعم البصمة/الوجه.')));
+                      }
+                      return;
+                    }
+                  }
+                  await Api.setBiometricEnabled(v);
+                  if (mounted) setState(() {});
+                },
+                secondary: const CircleAvatar(
+                  backgroundColor: Color(0x1A1E3A8A),
+                  child: Icon(Icons.fingerprint, color: Color(0xFF1E3A8A)),
+                ),
+                title: const Text('الدخول بالبصمة',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                subtitle: const Text('فتح التطبيق ببصمة الإصبع/الوجه بدل إدخال البيانات',
+                    style: TextStyle(fontSize: 12)),
+              ),
+            ),
             const SizedBox(height: 16),
             FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),

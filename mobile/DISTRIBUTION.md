@@ -55,6 +55,25 @@ open -a "Android Studio" android/app/src/main/AndroidManifest.xml
 > - `android:label="حضوري"` (اسم التطبيق تحت الأيقونة)
 > - `android:usesCleartextTraffic="true"` (السماح بالاتصال بخادمك http الداخلي)
 
+وأضف **قبل** وسم `<application` (لصلاحية الدخول بالبصمة):
+```xml
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+```
+
+### الخطوة 0.3ب — تفعيل البصمة (MainActivity)
+ميزة الدخول بالبصمة تتطلب تغيير الصنف الأساسي. افتح:
+`android/app/src/main/kotlin/sa/gov/ministry/attendance_portal/MainActivity.kt`
+وغيّر محتواه إلى:
+```kotlin
+package sa.gov.ministry.attendance_portal
+
+import io.flutter.embedding.android.FlutterFragmentActivity
+
+class MainActivity : FlutterFragmentActivity()
+```
+> التغيير الوحيد: `FlutterActivity` ← `FlutterFragmentActivity` (سطر الاستيراد والوراثة).
+> بدون هذا التغيير سيتعطّل التطبيق عند طلب البصمة على أندرويد.
+
 ### الخطوة 0.4 — تجربة سريعة على هاتف/محاكي
 ```bash
 flutter run
@@ -220,6 +239,9 @@ open ios/Runner/Info.plist
 	<!-- اسم التطبيق تحت الأيقونة -->
 	<key>CFBundleDisplayName</key>
 	<string>حضوري</string>
+	<!-- الدخول ببصمة الوجه (Face ID) -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>يستخدم التطبيق بصمة الوجه لتسجيل دخولك بسرعة وأمان.</string>
 ```
 
 ### الخطوة 2.2 — التوقيع في Xcode (مرة واحدة)

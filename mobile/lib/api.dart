@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -78,6 +80,83 @@ class Api {
   static Future<void> clearSession() async {
     await _prefs.remove(_kToken);
     await _prefs.remove(_kName);
+  }
+
+  // ==== حفظ بيانات الدخول (تخزين آمن مشفَّر) والدخول بالبصمة ====
+
+  static const _secure = FlutterSecureStorage();
+  static const _kSavedNo = 'savedEmployeeNo';
+  static const _kSavedPin = 'savedPin';
+  static const _kBiometric = 'biometricEnabled';
+
+  static Future<void> saveCredentials(String employeeNo, String pin) async {
+    await _secure.write(key: _kSavedNo, value: employeeNo);
+    await _secure.write(key: _kSavedPin, value: pin);
+  }
+
+  /// يعيد (رقم الموظف، الرقم السري) المحفوظين أو null.
+  static Future<(String, String)?> savedCredentials() async {
+    final no = await _secure.read(key: _kSavedNo);
+    final pin = await _secure.read(key: _kSavedPin);
+    if (no == null || pin == null) return null;
+    return (no, pin);
+  }
+
+  static Future<String?> savedEmployeeNo() => _secure.read(key: _kSavedNo);
+
+  static Future<void> clearCredentials() async {
+    await _secure.delete(key: _kSavedNo);
+    await _secure.delete(key: _kSavedPin);
+    await _prefs.setBool(_kBiometric, false);
+  }
+
+  static bool get biometricEnabled => _prefs.getBool(_kBiometric) ?? false;
+  static Future<void> setBiometricEnabled(bool v) =>
+      _prefs.setBool(_kBiometric, v);
+
+  /// هل يدعم الجهاز البصمة/الوجه؟
+  static Future<bool> biometricsAvailable() async {
+    try {
+      final auth = LocalAuthentication();
+      return await auth.canCheckBiometrics || await auth.isDeviceSupported();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// طلب مصادقة البصمة/الوجه من النظام.
+  static Future<bool> biometricAuthenticate() async {
+    try {
+      final auth = LocalAuthentication();
+      return await auth.authenticate(
+        localizedReason: 'استخدم بصمتك للدخول إلى حضوري',
+        options: const AuthenticationOptions(
+          biometricOnly: false,
+          stickyAuth: true,
+        ),
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// دخول بالبيانات المحفوظة (بعد نجاح البصمة). يعيد null عند النجاح أو رسالة خطأ.
+  static Future<String?> loginWithSaved() async {
+    final creds = await savedCredentials();
+    if (creds == null) return 'لا توجد بيانات محفوظة — ادخل يدويًا أول مرة.';
+    try {
+      await login(creds.$1, creds.$2);
+      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        // الرقم السري تغيّر من الإدارة — البيانات المحفوظة لم تعد صالحة
+        await clearCredentials();
+        return 'تغيّرت بياناتك — ادخل بالرقم السري الجديد.';
+      }
+      return e.message;
+    } catch (_) {
+      return 'تعذّر الاتصال بالخادم. تأكد أنك على شبكة الوزارة.';
+    }
   }
 
   /// معرّف الجهاز الثابت — أساس ربط الجهاز الواحد في الخادم.
