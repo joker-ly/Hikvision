@@ -1,32 +1,111 @@
-# دليل الإصدار والتوزيع — أندرويد (APK) و iOS (TestFlight)
+# الدليل الكامل خطوة بخطوة: من الكود إلى هواتف الموظفين
+## أندرويد (APK موقَّع) + iOS (TestFlight بإيميلات الموظفين)
 
-> المتطلبات جاهزة لديك: ماك + Xcode + Flutter + Android Studio.
-> نفّذ أولًا "الإعداد الأول للمشروع" في `README.md` (flutter create + تعديل AndroidManifest).
+> **جهازك جاهز إن توفّر**: ماك + Xcode + Flutter + Android Studio.
+> تحقّق قبل البدء:
+> ```bash
+> flutter doctor
+> ```
+> يجب أن ترى ✓ أمام: Flutter، Android toolchain، Xcode. إن ظهر ✗ أمام Android:
+> ```bash
+> flutter doctor --android-licenses   # اضغط y لكل الرخص
+> ```
 
 ---
 
-## أولًا: أندرويد — APK موقَّع لا ترفضه الهواتف
+# المرحلة 0: تجهيز المشروع (مرة واحدة فقط)
 
-سبب رفض/تحذير الهواتف الشائع هو **التوقيع بمفتاح debug** (توقيع مؤقت). الحل: توقيع
-release بمفتاح ثابت خاص بك — وهو أيضًا **شرط لتحديث التطبيق لاحقًا** على نفس الأجهزة
-(التحديث يُرفض إن اختلف التوقيع).
+### الخطوة 0.1 — جلب آخر نسخة من الكود
+```bash
+cd ~/PhpstormProjects/Hikvision-claude-hikvision-attendance-payroll-qqh2qz
+git pull
+cd mobile
+```
 
-### 1) إنشاء مفتاح التوقيع (مرة واحدة — احتفظ بالملف وكلمة المرور للأبد)
+### الخطوة 0.2 — توليد مجلدات المنصات (android و ios)
+```bash
+flutter create . --project-name attendance_portal --org sa.gov.ministry
+flutter pub get
+```
+> نتيجة متوقعة: ظهور مجلدي `android/` و `ios/` داخل `mobile/`.
+> معرّف الحزمة الناتج: `sa.gov.ministry.attendance_portal` — **لا تغيّره لاحقًا أبدًا**.
+
+### الخطوة 0.3 — تعديل AndroidManifest.xml
+افتح الملف:
+```bash
+open -a "Android Studio" android/app/src/main/AndroidManifest.xml
+```
+عدّل وسم `<application` ليصبح **بهذا الشكل بالضبط** (سطرا `label` و`usesCleartextTraffic`):
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:label="حضوري"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".MainActivity"
+            ...بقية الملف كما ولّده flutter دون تغيير...
+        </activity>
+        ...
+    </application>
+</manifest>
+```
+> ⚠️ لا تحذف أي شيء ولّده Flutter — فقط أضف/عدّل الخاصيتين:
+> - `android:label="حضوري"` (اسم التطبيق تحت الأيقونة)
+> - `android:usesCleartextTraffic="true"` (السماح بالاتصال بخادمك http الداخلي)
+
+### الخطوة 0.4 — تجربة سريعة على هاتف/محاكي
+```bash
+flutter run
+```
+- في شاشة الإعداد أدخل عنوان خادمك مثل: `http://192.168.1.10:5005`
+- جرّب الدخول برقم موظف أصدرت له رقمًا سريًا من الداشبورد (شاشة الموظفين ← زر 🔑).
+
+---
+
+# المرحلة 1: أندرويد — APK موقَّع لا ترفضه الهواتف
+
+سبب رفض التثبيت أو رفض **التحديثات** لاحقًا هو التوقيع بمفتاح debug المؤقت.
+سنوقّع بمفتاح release ثابت.
+
+### الخطوة 1.1 — إنشاء مفتاح التوقيع (مرة واحدة في العمر)
 ```bash
 keytool -genkey -v -keystore ~/attendance-portal.jks \
   -keyalg RSA -keysize 2048 -validity 10000 -alias portal
 ```
+سيسألك:
+1. **كلمة مرور المخزن** — اخترها واحفظها (سنسميها هنا `MyStorePass123`).
+2. الاسم/المنظمة/المدينة/الدولة — اكتب ما يناسب (مثلًا: Ministry / IT / SA).
+3. تأكيد بـ `yes`.
+4. كلمة مرور المفتاح — اضغط Enter لاستخدام نفس كلمة المخزن.
 
-### 2) ملف `mobile/android/key.properties` (لا يُرفع للمستودع)
+> 🔐 **احتفظ بالملف `~/attendance-portal.jks` وكلمة المرور للأبد** (انسخه لمكان آمن).
+> فقدانه = استحالة تحديث التطبيق على أجهزة الموظفين (سيحتاجون حذف وإعادة تثبيت).
+
+### الخطوة 1.2 — ملف كلمات المرور `key.properties`
+أنشئ الملف:
+```bash
+nano android/key.properties
+```
+والصق (عدّل كلمة المرور واسم المستخدم في المسار):
 ```properties
-storePassword=كلمة-مرور-المخزن
-keyPassword=كلمة-مرور-المفتاح
+storePassword=MyStorePass123
+keyPassword=MyStorePass123
 keyAlias=portal
-storeFile=/Users/اسمك/attendance-portal.jks
+storeFile=/Users/it/attendance-portal.jks
+```
+احفظ بـ `Ctrl+O` ثم Enter ثم `Ctrl+X`.
+> هذا الملف مستبعد من git تلقائيًا (في `.gitignore`) — لن تُرفع أسرارك.
+
+### الخطوة 1.3 — ربط التوقيع في إعداد البناء
+اعرف أي صيغة ولّدها Flutter لديك:
+```bash
+ls android/app/ | grep build.gradle
 ```
 
-### 3) ربط التوقيع في `mobile/android/app/build.gradle.kts`
-أعلى الملف (بعد سطور plugins):
+#### الحالة أ: الملف `build.gradle.kts` (مشاريع Flutter الحديثة)
+افتح `android/app/build.gradle.kts` وأضف **أعلى الملف** (بعد كتلة `plugins { }`):
 ```kotlin
 import java.util.Properties
 import java.io.FileInputStream
@@ -37,7 +116,7 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 ```
-وداخل `android { ... }`:
+ثم **داخل كتلة `android { ... }`** أضف كتلة `signingConfigs` وعدّل `buildTypes` الموجودة:
 ```kotlin
     signingConfigs {
         create("release") {
@@ -47,41 +126,85 @@ if (keystorePropertiesFile.exists()) {
             storePassword = keystoreProperties["storePassword"] as String
         }
     }
+
     buildTypes {
         release {
+            // كان: signingConfig = signingConfigs.getByName("debug")
             signingConfig = signingConfigs.getByName("release")
         }
     }
 ```
-> إن كان مشروعك ولّد `build.gradle` (Groovy) بدل `.kts` فالصيغة تختلف قليلًا — أخبرني وأعطيك مقابلها.
 
-### 4) البناء
+#### الحالة ب: الملف `build.gradle` (صيغة Groovy الأقدم)
+افتح `android/app/build.gradle` وأضف **قبل** سطر `android {`:
+```groovy
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+```
+ثم داخل `android { ... }`:
+```groovy
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+    buildTypes {
+        release {
+            // كان: signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
+        }
+    }
+```
+
+### الخطوة 1.4 — بناء الـ APK
 ```bash
-cd mobile
 flutter build apk --release
 ```
-الناتج: `build/app/outputs/flutter-apk/app-release.apk` — **موقَّع وجاهز للتوزيع**.
+نتيجة متوقعة في آخر السطور:
+```
+✓ Built build/app/outputs/flutter-apk/app-release.apk (XX.X MB)
+```
 
-### لماذا لن ترفضه الهواتف الآن؟
-- ✅ موقَّع بمفتاح release ثابت (لا "توقيع غير صالح").
-- ✅ APK شامل لكل المعالجات (arm64/arm32) افتراضيًا — لا "التطبيق غير متوافق".
-- ✅ نفس المفتاح = التحديثات المستقبلية تُقبل فوق النسخة القديمة.
-- ⚠️ يبقى تنبيهان طبيعيان لأي تطبيق خارج المتجر (ليسا رفضًا):
-  1. "السماح بالتثبيت من مصادر غير معروفة" — يفعّله الموظف مرة واحدة.
-  2. قد يعرض Play Protect "تطبيق غير معروف — هل تريد التثبيت؟" → "تثبيت على أي حال".
-- 🚫 لا تغيّر `applicationId` ولا المفتاح بين الإصدارات، ولكل إصدار جديد ارفع
-  `version` في `pubspec.yaml` (مثل `1.0.1+2`).
+### الخطوة 1.5 — التحقق من التوقيع (اختياري للاطمئنان)
+```bash
+keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk
+```
+يجب أن ترى بيانات شهادتك (Ministry/IT...) وليس "Android Debug".
+
+### الخطوة 1.6 — التوزيع على الموظفين
+- أرسل `app-release.apk` عبر مشاركة داخلية (إيميل/مجلد شبكة/USB).
+- على هاتف الموظف: فتح الملف ← سيطلب "السماح بالتثبيت من مصادر غير معروفة" ← سماح ←
+  إن ظهر تنبيه Play Protect "تطبيق غير معروف" ← **تثبيت على أي حال** — تنبيه طبيعي
+  لأي تطبيق خارج المتجر، وليس رفضًا.
+
+### الخطوة 1.7 — إصدار تحديث مستقبلًا
+1. في `pubspec.yaml` ارفع السطر: `version: 1.0.0+1` ← `version: 1.0.1+2`
+   (الرقم بعد `+` يجب أن يزيد في كل إصدار).
+2. `flutter build apk --release` بنفس المفتاح.
+3. وزّع — سيُثبَّت **فوق** النسخة القديمة دون حذف بيانات الدخول.
 
 ---
 
-## ثانيًا: iOS — الإصدار على TestFlight
+# المرحلة 2: iOS — الإصدار على TestFlight
 
-### 0) متطلب حساب
-اشتراك **Apple Developer Program** (99$/سنة) بحساب المنشأة أو حسابك — لا يمكن
-التوزيع عبر TestFlight بدونه.
+### الخطوة 2.0 — حساب Apple Developer (مرة واحدة)
+- سجّل في [developer.apple.com/programs/enroll](https://developer.apple.com/programs/enroll)
+  (99$/سنة). بدونه لا يوجد TestFlight.
+- بعد التفعيل، ادخل بحسابك على [appstoreconnect.apple.com](https://appstoreconnect.apple.com)
+  للتأكد أنه يعمل.
 
-### 1) تجهيزات iOS في المشروع (مرة واحدة)
-افتح `mobile/ios/Runner/Info.plist` وأضف داخل `<dict>` الجذر:
+### الخطوة 2.1 — تعديل Info.plist (إلزامي — بدونه لن يتصل التطبيق بخادمك)
+افتح:
+```bash
+open ios/Runner/Info.plist
+```
+أضف **داخل `<dict>` الجذر** (قبل سطر `</dict>` الأخير):
 ```xml
 	<!-- السماح بالاتصال بخادم HTTP على الشبكة الداخلية (iOS يحجب http افتراضيًا) -->
 	<key>NSAppTransportSecurity</key>
@@ -91,60 +214,142 @@ flutter build apk --release
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<!-- إذن الوصول للشبكة المحلية (iOS 14+) -->
+	<!-- إذن الوصول للشبكة المحلية (يظهر للموظف مرة واحدة في iOS 14+) -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>يتصل التطبيق بخادم الوزارة على الشبكة الداخلية لعرض بيانات حضورك.</string>
 	<!-- اسم التطبيق تحت الأيقونة -->
 	<key>CFBundleDisplayName</key>
 	<string>حضوري</string>
 ```
-> بدون قسم `NSAppTransportSecurity` سيفشل الاتصال بخادمك الداخلي على iOS نهائيًا.
 
-### 2) التوقيع في Xcode (مرة واحدة)
+### الخطوة 2.2 — التوقيع في Xcode (مرة واحدة)
 ```bash
-cd mobile
 open ios/Runner.xcworkspace
 ```
-في Xcode: هدف **Runner** ← تبويب **Signing & Capabilities**:
-- سجّل الدخول بحساب المطوّر (Xcode ← Settings ← Accounts).
-- فعّل **Automatically manage signing** واختر الـ Team.
-- تأكد من **Bundle Identifier** فريد (مثل `sa.gov.ministry.attendancePortal`) —
-  سيُسجَّل تلقائيًا في حسابك.
+> ⚠️ افتح `Runner.xcworkspace` وليس `Runner.xcodeproj`.
 
-### 3) إنشاء التطبيق في App Store Connect (مرة واحدة)
-[appstoreconnect.apple.com](https://appstoreconnect.apple.com) ← **My Apps** ← ➕ ←
-**New App**: المنصة iOS، الاسم "حضوري"، اللغة العربية، اختر الـ Bundle ID نفسه، وأي SKU.
+داخل Xcode:
+1. القائمة **Xcode ← Settings ← Accounts** ← زر ➕ ← **Apple ID** ← سجّل دخول حساب المطوّر.
+2. في الشريط الجانبي الأيسر اضغط أعلى عنصر (**Runner** بأيقونة زرقاء).
+3. في الوسط اختر **TARGETS ← Runner** ← تبويب **Signing & Capabilities**.
+4. علّم ✅ **Automatically manage signing**.
+5. **Team**: اختر فريق حسابك.
+6. **Bundle Identifier**: اتركه `sa.gov.ministry.attendancePortal` (أو عدّله لمعرّف
+   فريد ثم **لا تغيّره أبدًا**).
+7. انتظر ثوانيَ حتى تختفي أي أخطاء حمراء تحت الحقول (Xcode يسجّل المعرّف تلقائيًا).
 
-### 4) البناء والرفع
+جرّب على محاكي iOS للاطمئنان:
+```bash
+open -a Simulator
+flutter run
+```
+
+### الخطوة 2.3 — إنشاء التطبيق في App Store Connect (مرة واحدة)
+في [appstoreconnect.apple.com](https://appstoreconnect.apple.com):
+1. **My Apps** ← زر ➕ ← **New App**.
+2. املأ:
+   - **Platforms**: iOS
+   - **Name**: حضوري (أو "حضوري — وزارة …" إن كان الاسم محجوزًا)
+   - **Primary Language**: Arabic
+   - **Bundle ID**: اختر من القائمة نفس المعرّف الذي ظهر في Xcode
+   - **SKU**: أي نص فريد مثل `hodhoori-2026`
+   - **User Access**: Full Access
+3. **Create**.
+
+### الخطوة 2.4 — بناء ملف الرفع (ipa)
 ```bash
 flutter build ipa --release
 ```
-ثم ارفع الملف الناتج `build/ios/ipa/*.ipa` بإحدى طريقتين:
-- تطبيق **Transporter** من Mac App Store (اسحب الـ ipa وارفع) — الأسهل، أو
-- `xcrun altool` / نافذة Organizer في Xcode.
+نتيجة متوقعة:
+```
+✓ Built build/ios/ipa/attendance_portal.ipa
+```
+> إن فشل بخطأ توقيع: ارجع للخطوة 2.2 وتأكد من اختيار الـ Team، ثم أعد الأمر.
 
-بعد الرفع بدقائق يظهر البناء في App Store Connect ← تبويب **TestFlight**
-(قد يطلب إقرار Export Compliance: أجب "لا يستخدم تشفيرًا غير قياسي").
+### الخطوة 2.5 — رفع الملف إلى Apple
+**الطريقة الأسهل — تطبيق Transporter:**
+1. ثبّت **Transporter** من Mac App Store (مجاني، من Apple).
+2. افتحه وسجّل بنفس Apple ID.
+3. اسحب الملف `build/ios/ipa/attendance_portal.ipa` إلى نافذته ← **Deliver**.
+4. انتظر "Delivery Successful".
 
-### 5) إضافة إيميلات الموظفين
-في **TestFlight**:
-1. أنشئ مجموعة اختبار خارجية: **External Testing** ← ➕ مجموعة باسم "الموظفون".
-2. اربط البناء (Build) بالمجموعة.
-3. **Add Testers ← Add New Testers** ← أدخل إيميلات الموظفين (يدويًا أو استيراد CSV) —
-   حتى 10,000 مختبِر.
-4. أول بناء لمجموعة خارجية يمر بمراجعة **Beta App Review** (يوم–يومان عادة).
-   في **Review Notes** اكتب بالإنجليزية ما يشرح أنه تطبيق داخلي:
-   > Internal ministry employee-attendance viewer. Requires the ministry's private
-   > network to log in; no public accounts exist. UI can be reviewed from screenshots.
-5. بعد الاعتماد يصل لكل موظف **إيميل دعوة**: يثبّت تطبيق TestFlight من App Store،
-   يفتح الدعوة، فيُثبَّت "حضوري".
+بعد 5–30 دقيقة يظهر البناء في App Store Connect ← تطبيقك ← تبويب **TestFlight**
+(ستصلك رسالة "processing completed").
+> إن ظهر بجانب البناء تحذير أصفر **Missing Compliance**: اضغطه ← سؤال التشفير ←
+> اختر **None of the algorithms mentioned above / Standard encryption** ← احفظ.
+> (التطبيق يستخدم https/http القياسي فقط.)
 
-> بديل بلا مراجعة: **Internal Testing** — فوري لكنه يتطلب إضافة كل شخص كمستخدم في
-> فريق App Store Connect (حد 100) — مناسب لتجربتك أنت قبل تعميم المجموعة الخارجية.
+### الخطوة 2.6 — إضافة إيميلات الموظفين (المطلوب الأساسي)
+في App Store Connect ← تطبيقك ← **TestFlight**:
 
-### ملاحظات TestFlight
-- كل بناء صالح **90 يومًا** — ارفع بناءً جديدًا قبل الانتهاء (نفس الخطوات، مع رفع
-  `version` في `pubspec.yaml`).
-- ربط الجهاز الواحد يعمل على iOS تلقائيًا (نفس آلية معرّف الجهاز في التطبيق).
-- إن رُفض البناء في مراجعة البيتا بسبب تعذّر الدخول، ردّ عليهم بالتوضيح أعلاه أو
-  زوّدهم بلقطات شاشة — تطبيقات المنشآت الداخلية تُقبل عادة بهذه الملاحظات.
+**أ) مجموعة خارجية للموظفين (حتى 10,000):**
+1. من الشريط الجانبي: **External Testing** ← زر ➕ ← اسم المجموعة: `الموظفون` ← **Create**.
+2. داخل المجموعة ← قسم **Builds** ← ➕ ← اختر البناء الذي رفعته ← **Next**.
+3. سيطلب **Test Information** (مرة واحدة):
+   - **Beta App Description**: تطبيق داخلي لموظفي الوزارة لمتابعة الحضور والانصراف.
+   - **Feedback Email**: إيميلك.
+   - **What to Test**: تسجيل الدخول وعرض بيانات الحضور.
+4. في **Review Notes** الصق هذا النص الإنجليزي (مهم جدًا حتى لا يتعثر الاعتماد لأن
+   المراجع خارج شبكتكم لا يستطيع الدخول):
+   ```
+   Internal ministry employee-attendance viewer. Login requires the ministry's
+   private network and employee credentials issued by the admin dashboard;
+   no public accounts exist. The app only displays the employee's own
+   fingerprint-device attendance records. UI can be evaluated from the
+   attached screenshots.
+   ```
+5. **Submit for Review** ← مراجعة البيتا تستغرق عادة يومًا أو يومين.
+6. بعد الاعتماد: داخل المجموعة ← **Testers** ← ➕ ← **Add New Testers**:
+   - أدخل الإيميلات يدويًا (إيميل + اسم أول + اسم أخير لكل موظف)، **أو**
+   - **Import from CSV** لرفع ملف دفعة واحدة بصيغة:
+     ```csv
+     first_name,last_name,email
+     أحمد,محمد,ahmed@example.com
+     سارة,علي,sara@example.com
+     ```
+7. يصل كل موظف **إيميل دعوة** من Apple:
+   - يثبّت تطبيق **TestFlight** من App Store.
+   - يفتح الدعوة من الإيميل ← **View in TestFlight** ← **Install**.
+
+**ب) (اختياري) تجربتك أنت فورًا بلا مراجعة — Internal Testing:**
+1. **Internal Testing** ← ➕ مجموعة ← أضف نفسك (يجب أن يكون إيميلك مستخدمًا في
+   الفريق عبر **Users and Access**).
+2. البناء يتاح لك فورًا دون أي مراجعة — مناسب لتجربتك قبل تعميم المجموعة الخارجية.
+
+### الخطوة 2.7 — تحديثات iOS مستقبلًا
+1. ارفع `version` في `pubspec.yaml` (مثل `1.0.1+2`).
+2. `flutter build ipa --release` ← رفع عبر Transporter.
+3. TestFlight ← أضف البناء الجديد للمجموعة (التحديثات التالية غالبًا **لا تحتاج
+   مراجعة جديدة** أو تُعتمد أسرع) — يصل الموظفين إشعار تحديث في تطبيق TestFlight.
+4. ⏳ تذكير: كل بناء صالح **90 يومًا** — أصدِر بناءً جديدًا قبل انتهائها.
+
+---
+
+# حل المشكلات الشائعة
+
+| المشكلة | الحل |
+|---|---|
+| أندرويد: "App not installed" عند التثبيت | تأكد أنك وزّعت `app-release.apk` (وليس debug)، وأن الخطوة 1.3 طُبّقت ثم أعد البناء |
+| أندرويد: التحديث يرفض التثبيت فوق القديم | اختلف التوقيع — استخدم نفس ملف `.jks` دائمًا، وارفع رقم `+` في version |
+| `flutter build apk` يفشل بـ "key.properties" | تأكد من مسار `storeFile` الكامل الصحيح في key.properties وكلمات المرور |
+| iOS: التطبيق لا يتصل بالخادم | لم تُطبَّق الخطوة 2.1 (ATS في Info.plist) — طبّقها وأعد البناء |
+| iOS: ظهر سؤال "الشبكة المحلية" ورفضه الموظف | إعدادات iOS ← حضوري ← تفعيل "الشبكة المحلية" |
+| `flutter build ipa` يفشل: signing | Xcode ← Runner ← Signing: اختر Team وفعّل Automatic، ثم أعد الأمر |
+| البناء لا يظهر في TestFlight بعد الرفع | انتظر حتى 30 دقيقة، وراجع إيميلك — قد يكون هناك رفض تلقائي بسبب أيقونة ناقصة مثلًا |
+| رفض Beta Review لعدم القدرة على الدخول | ردّ عليهم بنص الـ Review Notes أعلاه مع لقطات شاشة من التطبيق |
+| دعوة TestFlight لم تصل موظفًا | تحقق من صندوق Spam، أو احذفه وأعد إضافته، وتأكد أن الإيميل صحيح |
+
+---
+
+# ملخص الأوامر (بعد الإعداد الأول)
+
+```bash
+# أندرويد — إصدار جديد
+cd mobile
+flutter build apk --release
+# → build/app/outputs/flutter-apk/app-release.apk
+
+# iOS — إصدار جديد
+flutter build ipa --release
+# → build/ios/ipa/*.ipa ← ارفعه بـ Transporter ← TestFlight
+```
