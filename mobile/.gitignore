@@ -18,3 +18,8 @@ web/
 .idea/
 *.iml
 .vscode/
+
+# أسرار توقيع أندرويد — لا تُرفع أبدًا
+key.properties
+*.jks
+*.keystore
