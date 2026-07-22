@@ -348,6 +348,51 @@ flutter build ipa --release
    الفريق عبر **Users and Access**).
 2. البناء يتاح لك فورًا دون أي مراجعة — مناسب لتجربتك قبل تعميم المجموعة الخارجية.
 
+### مرجع: محتوى نموذج Test Information جاهز للصق
+- **Beta App Description (عربي)**: وصف التطبيق للموظفين — انظر النص الكامل في قسم
+  "محتوى TestFlight الجاهز" أدناه.
+- **Feedback Email**: إيميل المسؤول.
+- **Marketing URL / Privacy Policy URL / License Agreement**: تُترك فارغة في TestFlight.
+- **Sign-in required**: يُترك **بدون تحديد** — ويُشرح السبب في Review Notes (الدخول
+  مستحيل خارج الشبكة الداخلية وبربط جهاز واحد)، فطلب حساب تجريبي سيفشل حتمًا.
+- **Review Notes (إنجليزي)**:
+  ```
+  "Hodhoori" is an internal employee-attendance viewer for a government ministry.
+
+  IMPORTANT — why sign-in cannot be demonstrated:
+  - The app connects ONLY to the ministry's on-premises server over the private
+    internal network (private IP ranges). Outside that network the app
+    intentionally shows a clear message: "You are outside the ministry network".
+  - Sign-in requires an employee number and a secret PIN issued by the ministry's
+    admin dashboard, and each account is hard-bound to a single physical device
+    after its first login. Therefore no working demo account can function on a
+    reviewer's device or network by design.
+
+  What the reviewer can verify without credentials:
+  - The server-setup screen, the login screen, and the offline/out-of-network
+    message are all reachable immediately.
+  - All post-login screens (Today status, monthly summary, punch records,
+    account) are shown in the App Screenshots.
+
+  Scope: read-only display of the signed-in employee's own attendance data.
+  No public registration, no payments, no user-generated content, no ads,
+  no tracking, standard HTTPS/HTTP networking only.
+  ```
+- **الوصف العربي الكامل (Beta App Description)**:
+  ```
+  تطبيق «حضوري» هو تطبيق داخلي مخصص لموظفي الوزارة لمتابعة الحضور والانصراف.
+
+  يتيح التطبيق للموظف الاطلاع على:
+  • حالة اليوم: أول بصمة دخول، آخر بصمة خروج، ودقائق التأخير إن وجدت.
+  • ملخص الشهر: أيام الحضور والغياب، مرات ودقائق التأخير، ساعات العمل، ونسبة الحضور.
+  • سجل البصمات يومًا بيوم لأي شهر.
+  • بيانات حسابه وورديته المعتمدة.
+
+  يتصل التطبيق حصريًا بخادم الوزارة عبر الشبكة الداخلية، ويتطلب الدخول رقم الموظف
+  ورقمًا سريًا تصدره إدارة النظام، مع ربط الحساب بجهاز واحد لحماية البيانات.
+  البيانات للعرض فقط وتُحدَّث تلقائيًا كل 15 دقيقة وفق جدول المزامنة مع جهاز البصمة.
+  ```
+
 ### الخطوة 2.7 — تحديثات iOS مستقبلًا
 1. ارفع `version` في `pubspec.yaml` (مثل `1.0.1+2`).
 2. `flutter build ipa --release` ← رفع عبر Transporter.
