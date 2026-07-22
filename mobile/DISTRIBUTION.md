@@ -74,6 +74,16 @@ class MainActivity : FlutterFragmentActivity()
 > التغيير الوحيد: `FlutterActivity` ← `FlutterFragmentActivity` (سطر الاستيراد والوراثة).
 > بدون هذا التغيير سيتعطّل التطبيق عند طلب البصمة على أندرويد.
 
+### الخطوة 0.3ج — توليد أيقونات التطبيق (مرة واحدة)
+الأيقونة جاهزة في `assets/icon/` (بصمة على تدرّج أزرق). لتوليد كل المقاسات
+لأندرويد وiOS تلقائيًا:
+```bash
+flutter pub get
+dart run flutter_launcher_icons
+```
+نتيجة متوقعة: `✓ Successfully generated launcher icons`.
+> أعد هذا الأمر بعد أي تغيير مستقبلي لملفات `assets/icon/`.
+
 ### الخطوة 0.4 — تجربة سريعة على هاتف/محاكي
 ```bash
 flutter run
