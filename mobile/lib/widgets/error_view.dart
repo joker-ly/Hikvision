@@ -28,6 +28,15 @@ class ConnectionErrorView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
+        if (isOffline && Api.serverUrl != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'الخادم: ${Api.serverUrl}',
+            textAlign: TextAlign.center,
+            textDirection: TextDirection.ltr,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
         if (onRetry != null) ...[
           const SizedBox(height: 18),
           Center(

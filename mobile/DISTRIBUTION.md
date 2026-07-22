@@ -55,10 +55,24 @@ open -a "Android Studio" android/app/src/main/AndroidManifest.xml
 > - `android:label="حضوري"` (اسم التطبيق تحت الأيقونة)
 > - `android:usesCleartextTraffic="true"` (السماح بالاتصال بخادمك http الداخلي)
 
-وأضف **قبل** وسم `<application` (لصلاحية الدخول بالبصمة):
+وأضف **قبل** وسم `<application` (إذنان — الإنترنت إلزامي لنسخة release، والبصمة):
 ```xml
+    <!-- إلزامي: Flutter يضيف INTERNET لنسخة debug فقط؛ نسخة release بلا هذا السطر
+         لا تتصل بأي خادم إطلاقًا (تظهر رسالة "خارج شبكة الوزارة" خطأً). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 ```
+وأضف داخل وسم `<application ...>` خاصية إعداد أمان الشبكة (بجانب usesCleartextTraffic):
+```xml
+        android:networkSecurityConfig="@xml/network_security_config"
+```
+ثم انسخ ملف `mobile/android_network_security_config.xml` (من المستودع) إلى:
+`android/app/src/main/res/xml/network_security_config.xml`
+
+> ⚠️ **ملاحظة مهمة عن أندرويد**: لا توجد نافذة "إذن الشبكة المحلية" على أندرويد
+> (هذه ميزة iOS فقط). فشل الاتصال في نسخة release سببه دائمًا أحد أمرين: **غياب إذن
+> INTERNET** من الـ Manifest، أو **حظر HTTP** (يُحل بـ usesCleartextTraffic +
+> network_security_config أعلاه). بعد إضافتهما يتصل التطبيق بالخادم الداخلي مباشرة.
 
 ### الخطوة 0.3ب — تفعيل البصمة (MainActivity)
 ميزة الدخول بالبصمة تتطلب تغيير الصنف الأساسي. افتح:
