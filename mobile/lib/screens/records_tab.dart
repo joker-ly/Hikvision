@@ -52,7 +52,7 @@ class _RecordsTabState extends State<RecordsTab> {
         'CheckOut' => 'خروج',
         'BreakIn' => 'نهاية استراحة',
         'BreakOut' => 'بداية استراحة',
-        _ => d,
+        _ => 'بصمة',
       };
 
   @override
@@ -125,16 +125,19 @@ class _RecordsTabState extends State<RecordsTab> {
                           const Divider(),
                           ...list.reversed.map((r) {
                             final isManual = r['source'] == 'Manual';
-                            final isIn = r['direction'] == 'CheckIn';
+                            final dir = r['direction'] as String;
+                            final isIn = dir == 'CheckIn';
+                            final isOut = dir == 'CheckOut';
+                            final (icon, color) = isIn
+                                ? (Icons.login, Colors.green)
+                                : isOut
+                                    ? (Icons.logout, Colors.teal)
+                                    : (Icons.fingerprint, Colors.blueGrey);
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 3),
                               child: Row(
                                 children: [
-                                  Icon(
-                                    isIn ? Icons.login : Icons.logout,
-                                    size: 18,
-                                    color: isIn ? Colors.green : Colors.teal,
-                                  ),
+                                  Icon(icon, size: 18, color: color),
                                   const SizedBox(width: 8),
                                   Text(r['time'] as String,
                                       style: const TextStyle(
