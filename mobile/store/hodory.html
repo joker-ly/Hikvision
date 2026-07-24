@@ -4,10 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>تحميل تطبيق حضوري — وزارة الصحة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, "Segoe UI", Tahoma, sans-serif;
+            font-family: "Cairo", -apple-system, "Segoe UI", Tahoma, sans-serif;
             background: linear-gradient(160deg, #1E3A8A, #3B5BC0);
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
@@ -63,9 +64,12 @@
         <h1>تطبيق «حضوري»</h1>
         <p class="sub">متابعة الحضور والانصراف — وزارة الصحة</p>
 
-        <div class="step">
-            <b>⚠️ خطوة أساسية قبل التحميل</b>
-            يجب أولًا الانضمام لمجموعة الاختبار عبر بريدك في Google، وإلا لن يفتح رابط التحميل.
+        <div class="step" id="androidStep">
+            <b>⚠️ لمستخدمي أندرويد فقط</b>
+            يجب أولًا الانضمام لمجموعة الاختبار عبر بريدك في Google، وإلا لن يفتح رابط
+            التحميل. <a href="https://groups.google.com/g/moh-app-testers"
+            style="color:#92400e;font-weight:700">انضم للمجموعة من هنا</a>.
+            <br>مستخدمو آيفون لا يحتاجون الانضمام لأي مجموعة.
         </div>
 
         <a class="btn btn-android" id="android"
@@ -80,7 +84,8 @@
         </a>
 
         <p class="note">
-            سيظهر الزر المناسب لجهازك تلقائيًا. للاستفسار: راجع إدارة نظم المعلومات.
+            يعمل التطبيق على شبكة الوزارة الداخلية فقط.<br>
+            <b>مكتب تقنية المعلومات</b>
         </p>
     </div>
 
@@ -93,13 +98,16 @@
             var isAndroid = /android/i.test(ua);
             var android = document.getElementById('android');
             var ios = document.getElementById('ios');
+            var step = document.getElementById('androidStep');
 
             if (isAndroid) {
                 ios.classList.add('hidden');
             } else if (isIOS) {
                 android.classList.add('hidden');
+                // تنبيه المجموعة يخص أندرويد فقط
+                step.classList.add('hidden');
             }
-            // على الحاسوب: يظهر الزران معًا (الوضع الافتراضي)
+            // على الحاسوب: يظهر الزران والتنبيه معًا (الوضع الافتراضي)
         })();
     </script>
 </body>
