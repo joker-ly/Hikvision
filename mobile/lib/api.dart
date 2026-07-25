@@ -56,8 +56,14 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-/// عميل واجهة بوابة الموظفين — يدير عنوان الخادم والتوكن ومعرّف الجهاز.
+/// عميل واجهة بوابة الموظفين — يدير الاتصال بالخادم والتوكن ومعرّف الجهاز.
 class Api {
+  /// عنوان خادم الوزارة الثابت (لا يُدخله الموظف).
+  static const serverUrl = 'http://192.168.95.228:5005';
+
+  /// رقم مدير مكتب تقنية المعلومات لإصدار الرقم السري.
+  static const supportPhone = '0911441419';
+
   /// الرسالة الموحّدة عند تعذّر الوصول للخادم.
   static const offlineMessage =
       'أنت خارج شبكة الوزارة، يرجى الاتصال بشبكة الوزارة لاستخدام التطبيق.';
@@ -73,10 +79,10 @@ class Api {
     }
   }
 
-  static const _kServer = 'serverUrl';
   static const _kToken = 'token';
   static const _kDeviceId = 'deviceId';
   static const _kName = 'fullName';
+  static const _kGuideSeen = 'guideSeen';
 
   static late SharedPreferences _prefs;
 
@@ -84,15 +90,12 @@ class Api {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  static String? get serverUrl => _prefs.getString(_kServer);
   static String? get token => _prefs.getString(_kToken);
   static String get fullName => _prefs.getString(_kName) ?? '';
 
-  static Future<void> setServer(String url) async {
-    var u = url.trim();
-    if (u.endsWith('/')) u = u.substring(0, u.length - 1);
-    await _prefs.setString(_kServer, u);
-  }
+  /// هل شُوهدت شاشة التعليمات من قبل؟
+  static bool get guideSeen => _prefs.getBool(_kGuideSeen) ?? false;
+  static Future<void> setGuideSeen() => _prefs.setBool(_kGuideSeen, true);
 
   static Future<void> clearSession() async {
     await _prefs.remove(_kToken);
@@ -212,14 +215,16 @@ class Api {
         resp.statusCode);
   }
 
-  /// فحص الوصول للخادم (شاشة الإعداد).
-  static Future<bool> ping(String url) async {
-    var u = url.trim();
-    if (u.endsWith('/')) u = u.substring(0, u.length - 1);
-    final resp = await http
-        .get(Uri.parse('$u/api/portal/ping'))
-        .timeout(const Duration(seconds: 6));
-    return resp.statusCode == 200;
+  /// فحص الوصول لخادم الوزارة (هل الجهاز داخل الشبكة؟).
+  static Future<bool> ping() async {
+    try {
+      final resp = await http
+          .get(_uri('/ping'))
+          .timeout(const Duration(seconds: 6));
+      return resp.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// إعدادات المزامنة من الخادم (لمؤقّت "المزامنة القادمة") مع قيم افتراضية.

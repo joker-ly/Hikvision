@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'api.dart';
+import 'screens/guide.dart';
 import 'screens/home_shell.dart';
 import 'screens/lock_screen.dart';
 import 'screens/login.dart';
-import 'screens/server_setup.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +18,9 @@ class PortalApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget start;
-    if (Api.serverUrl == null) {
-      start = const ServerSetupScreen();
+    if (!Api.guideSeen) {
+      // أول تشغيل: شاشة التعليمات
+      start = const GuideScreen();
     } else if (Api.token == null) {
       start = const LoginScreen();
     } else if (Api.biometricEnabled) {

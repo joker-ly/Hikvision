@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import 'guide.dart';
 import 'home_shell.dart';
-import 'server_setup.dart';
 
 class LoginScreen extends StatefulWidget {
   /// عند true تُطلب البصمة تلقائيًا فور فتح الشاشة (إن كانت مفعّلة).
@@ -207,11 +207,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     label: const Text('دخول'),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 TextButton.icon(
-                  onPressed: () => goTo(context, const ServerSetupScreen()),
-                  icon: const Icon(Icons.dns, size: 18),
-                  label: const Text('تغيير عنوان الخادم'),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const GuideScreen(asHelp: true))),
+                  icon: const Icon(Icons.help_outline, size: 18),
+                  label: const Text('تعليمات الاستخدام'),
+                ),
+                Text(
+                  'للحصول على الرقم السري تواصل مع مكتب تقنية المعلومات\n${Api.supportPhone}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
                 ),
               ],
             ),

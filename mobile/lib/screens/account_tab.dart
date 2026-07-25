@@ -4,6 +4,7 @@ import '../api.dart';
 import '../main.dart';
 import '../widgets/error_view.dart';
 import '../widgets/sync_banner.dart';
+import 'guide.dart';
 import 'login.dart';
 
 class AccountTab extends StatefulWidget {
@@ -146,7 +147,40 @@ class _AccountTabState extends State<AccountTab> {
                     style: TextStyle(fontSize: 12)),
               ),
             ),
-            const SizedBox(height: 16),
+            Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const GuideScreen(asHelp: true))),
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFF1E3A8A).withValues(alpha: .1),
+                  child: const Icon(Icons.help_outline,
+                      color: Color(0xFF1E3A8A), size: 20),
+                ),
+                title: const Text('تعليمات الاستخدام',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                subtitle: const Text('آلية عمل التطبيق وشرح النوافذ',
+                    style: TextStyle(fontSize: 12)),
+                trailing: const Icon(Icons.chevron_left, color: Colors.grey),
+              ),
+            ),
+            Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.orange.withValues(alpha: .12),
+                  child: const Icon(Icons.support_agent,
+                      color: Colors.orange, size: 20),
+                ),
+                title: const Text('مكتب تقنية المعلومات',
+                    style: TextStyle(fontSize: 12, color: Colors.grey)),
+                subtitle: Text(
+                  'للرقم السري وإعادة تعيين الجهاز: ${Api.supportPhone}',
+                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
               onPressed: _logout,
