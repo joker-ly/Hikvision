@@ -83,6 +83,7 @@ class Api {
   static const _kDeviceId = 'deviceId';
   static const _kName = 'fullName';
   static const _kGuideSeen = 'guideSeen';
+  static const _kRole = 'role';
 
   static late SharedPreferences _prefs;
 
@@ -93,6 +94,10 @@ class Api {
   static String? get token => _prefs.getString(_kToken);
   static String get fullName => _prefs.getString(_kName) ?? '';
 
+  /// دور الحساب الحالي: employee أو admin.
+  static String get role => _prefs.getString(_kRole) ?? 'employee';
+  static bool get isAdmin => role == 'admin';
+
   /// هل شُوهدت شاشة التعليمات من قبل؟
   static bool get guideSeen => _prefs.getBool(_kGuideSeen) ?? false;
   static Future<void> setGuideSeen() => _prefs.setBool(_kGuideSeen, true);
@@ -100,6 +105,7 @@ class Api {
   static Future<void> clearSession() async {
     await _prefs.remove(_kToken);
     await _prefs.remove(_kName);
+    await _prefs.remove(_kRole);
   }
 
   // ==== حفظ بيانات الدخول (تخزين آمن مشفَّر) والدخول بالبصمة ====
@@ -273,6 +279,7 @@ class Api {
         final data = _decode(resp);
         await _prefs.setString(_kToken, data['token'] as String);
         await _prefs.setString(_kName, data['fullName'] as String? ?? '');
+        await _prefs.setString(_kRole, data['role'] as String? ?? 'employee');
       });
 
   static Future<Map<String, dynamic>> _get(String path,
@@ -293,6 +300,29 @@ class Api {
       _get('/records', {'year': '$year', 'month': '$month'});
 
   static Future<Map<String, dynamic>> me() => _get('/me');
+
+  // ==== واجهة الأدمن ====
+
+  /// المؤشرات وقوائم الأعلى وملخص المجموعات لشهر محدد.
+  static Future<Map<String, dynamic>> adminStats(int year, int month, {int? groupId}) =>
+      _get('/admin/stats', {
+        'year': '$year',
+        'month': '$month',
+        if (groupId != null) 'groupId': '$groupId',
+      });
+
+  /// بحث الموظفين بالاسم أو الرقم المالي أو رقم البصمة.
+  static Future<Map<String, dynamic>> searchEmployees(String q, {int? groupId}) =>
+      _get('/admin/employees', {
+        if (q.trim().isNotEmpty) 'q': q.trim(),
+        if (groupId != null) 'groupId': '$groupId',
+      });
+
+  /// إحصائيات موظف واحد لشهر محدد.
+  static Future<Map<String, dynamic>> employeeStats(int id, int year, int month) =>
+      _get('/admin/employee/$id', {'year': '$year', 'month': '$month'});
+
+  static Future<Map<String, dynamic>> adminGroups() => _get('/admin/groups');
 
   static Future<void> logout() async {
     try {

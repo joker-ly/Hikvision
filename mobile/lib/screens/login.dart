@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
+import 'admin/admin_shell.dart';
 import 'guide.dart';
 import 'home_shell.dart';
 
@@ -91,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         await Api.clearCredentials();
       }
-      if (mounted) goTo(context, const HomeShell());
+      if (mounted) goTo(context, homeForRole());
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
@@ -111,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (err == null) {
-      goTo(context, const HomeShell());
+      goTo(context, homeForRole());
     } else {
       setState(() {
         _error = err;
@@ -163,9 +164,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextField(
                   controller: _noController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: TextInputType.text,
                   decoration: const InputDecoration(
-                    labelText: 'رقم الموظف (رقم البصمة)',
+                    labelText: 'رقم الموظف أو اسم المستخدم',
                     prefixIcon: Icon(Icons.badge),
                   ),
                 ),

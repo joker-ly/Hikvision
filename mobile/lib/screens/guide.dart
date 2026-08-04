@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
-import 'home_shell.dart';
 import 'lock_screen.dart';
 import 'login.dart';
 
@@ -48,6 +47,7 @@ class _GuideScreenState extends State<GuideScreen> {
       '• شهري: أيام الحضور والغياب، مرات ودقائق التأخير، ساعات العمل ونسبة الحضور.',
       '• سجلاتي: كل بصماتك يومًا بيوم لأي شهر تختاره.',
       '• حسابي: بياناتك ووردية دوامك وجهازك المرتبط والدخول بالبصمة.',
+      'للمديرين: تظهر لوحة التقارير والإحصائيات وبحث الموظفين بدل الشاشات الشخصية.',
     ]),
     _GuidePage(Icons.security, Colors.deepPurple, 'الدخول والأمان', [
       'اسم المستخدم هو رقمك في جهاز البصمة، مع رقم سري خاص بك.',
@@ -75,7 +75,7 @@ class _GuideScreenState extends State<GuideScreen> {
     } else if (Api.biometricEnabled) {
       goTo(context, const LockScreen());
     } else {
-      goTo(context, const HomeShell());
+      goTo(context, homeForRole());
     }
   }
 

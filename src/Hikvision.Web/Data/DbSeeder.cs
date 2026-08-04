@@ -132,6 +132,14 @@ IF COL_LENGTH(N'[Employees]', N'ExemptionDate') IS NULL
 ALTER TABLE [Employees] ADD [ExemptionDate] date NULL;
 IF COL_LENGTH(N'[Users]', N'IsAdmin') IS NULL
 ALTER TABLE [Users] ADD [IsAdmin] bit NOT NULL CONSTRAINT [DF_Users_IsAdmin] DEFAULT 0;
+IF COL_LENGTH(N'[Users]', N'ApiTokenHash') IS NULL
+ALTER TABLE [Users] ADD [ApiTokenHash] nvarchar(100) NULL;
+IF COL_LENGTH(N'[Users]', N'ApiTokenExpiresUtc') IS NULL
+ALTER TABLE [Users] ADD [ApiTokenExpiresUtc] datetime2 NULL;
+IF COL_LENGTH(N'[Users]', N'LoginFailedCount') IS NULL
+ALTER TABLE [Users] ADD [LoginFailedCount] int NOT NULL CONSTRAINT [DF_Users_LoginFailedCount] DEFAULT 0;
+IF COL_LENGTH(N'[Users]', N'LockedUntilUtc') IS NULL
+ALTER TABLE [Users] ADD [LockedUntilUtc] datetime2 NULL;
 IF COL_LENGTH(N'[Employees]', N'PinHash') IS NULL
 ALTER TABLE [Employees] ADD [PinHash] nvarchar(max) NULL;
 IF COL_LENGTH(N'[Employees]', N'PinFailedCount') IS NULL

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'api.dart';
+import 'screens/admin/admin_shell.dart';
 import 'screens/guide.dart';
 import 'screens/home_shell.dart';
 import 'screens/lock_screen.dart';
@@ -27,7 +28,7 @@ class PortalApp extends StatelessWidget {
       // جلسة سارية + بصمة مفعّلة → قفل بالبصمة قبل الدخول
       start = const LockScreen();
     } else {
-      start = const HomeShell();
+      start = homeForRole();
     }
 
     const brand = Color(0xFF1E3A8A);
@@ -91,6 +92,9 @@ class PortalApp extends StatelessWidget {
     );
   }
 }
+
+/// الواجهة الرئيسية حسب دور الحساب: لوحة المدير أو شاشات الموظف.
+Widget homeForRole() => Api.isAdmin ? const AdminShell() : const HomeShell();
 
 /// انتقال موحّد مع تفريغ سجل الشاشات (تسجيل خروج/دخول).
 void goTo(BuildContext context, Widget screen) {

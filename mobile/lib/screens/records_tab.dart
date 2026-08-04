@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../main.dart';
 import '../widgets/error_view.dart';
+import '../widgets/month_picker.dart';
 
 class RecordsTab extends StatefulWidget {
   const RecordsTab({super.key});
@@ -15,11 +16,6 @@ class _RecordsTabState extends State<RecordsTab> {
   late int _year;
   late int _month;
   late Future<Map<String, dynamic>> _future;
-
-  static const _monthNames = [
-    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-  ];
 
   @override
   void initState() {
@@ -59,24 +55,7 @@ class _RecordsTabState extends State<RecordsTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Row(
-            children: [
-              IconButton(
-                  onPressed: () => _shift(-1),
-                  icon: const Icon(Icons.chevron_right)),
-              Expanded(
-                child: Text('${_monthNames[_month - 1]} $_year',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium),
-              ),
-              IconButton(
-                  onPressed: () => _shift(1),
-                  icon: const Icon(Icons.chevron_left)),
-            ],
-          ),
-        ),
+        MonthPicker(year: _year, month: _month, onShift: _shift),
         Expanded(
           child: FutureBuilder<Map<String, dynamic>>(
             future: _future,

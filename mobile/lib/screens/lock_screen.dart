@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
-import 'home_shell.dart';
 import 'login.dart';
 
 /// قفل بالبصمة عند فتح التطبيق والجلسة سارية — حماية بيانات الموظف.
@@ -23,7 +22,7 @@ class _LockScreenState extends State<LockScreen> {
   Future<void> _unlock() async {
     final ok = await Api.biometricAuthenticate();
     if (!mounted) return;
-    if (ok) goTo(context, const HomeShell());
+    if (ok) goTo(context, homeForRole());
   }
 
   @override
