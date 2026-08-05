@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../main.dart';
-import 'admin/admin_shell.dart';
 import 'guide.dart';
-import 'home_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   /// عند true تُطلب البصمة تلقائيًا فور فتح الشاشة (إن كانت مفعّلة).
