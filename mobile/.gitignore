@@ -4,15 +4,42 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-pubspec.lock
 
-# مجلدات المنصات تُولَّد بأمر: flutter create .
-android/
-ios/
+# ملاحظة: مجلدا android/ و ios/ يُرفعان للمستودع (بإعداداتهما: اسم الحزمة،
+# الأذونات، التوقيع، الأيقونات) حتى يعمل البناء على أي جهاز بعد git pull
+# مباشرة دون إعادة flutter create وإعادة الضبط يدويًا.
+# المنصات غير المستخدمة تُولَّد عند الحاجة:
 linux/
 macos/
 windows/
 web/
+
+# مخرجات بناء أندرويد (الإعدادات نفسها تُرفع)
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/build/
+android/app/build/
+android/app/release/
+android/app/debug/
+android/app/profile/
+android/captures/
+android/.idea/
+android/*.iml
+
+# مؤقتات iOS (إعدادات Runner تُرفع)
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+ios/build/
+ios/ServiceDefinitions.json
 
 # بيئات التطوير
 .idea/

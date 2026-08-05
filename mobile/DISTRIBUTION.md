@@ -22,13 +22,23 @@ git pull
 cd mobile
 ```
 
-### الخطوة 0.2 — توليد مجلدات المنصات (android و ios)
+### الخطوة 0.2 — مجلدات المنصات (android و ios)
+مجلدا `android/` و`ios/` **مرفوعان في المستودع** بكامل إعداداتهما (اسم الحزمة
+`ly.gov.ministry.attendancePortal`، الأذونات، أمان الشبكة، الأيقونات، التوقيع).
+لذلك على أي جهاز جديد يكفي:
 ```bash
-flutter create . --project-name attendance_portal --org sa.gov.ministry
+git pull
 flutter pub get
 ```
-> نتيجة متوقعة: ظهور مجلدي `android/` و `ios/` داخل `mobile/`.
-> معرّف الحزمة الناتج: `sa.gov.ministry.attendance_portal` — **لا تغيّره لاحقًا أبدًا**.
+ولا حاجة إطلاقًا لـ `flutter create` (تشغيله يعيد الإعدادات الافتراضية ويكسر الضبط).
+
+> **إن فشل البناء برسالة "unsupported Gradle project"** فمعناها أن مجلد `android/`
+> غير موجود على جهازك — نفّذ `git pull` لجلبه. وإن لم يكن مرفوعًا بعد، ارفعه من
+> الجهاز المضبوط: `git add mobile/android mobile/ios && git commit && git push`.
+
+**الشيء الوحيد غير المرفوع (وهو أمر مقصود)**: ملفا التوقيع السريان
+`android/key.properties` و`~/attendance-portal.jks` — انسخهما يدويًا لكل جهاز بناء
+(انظر المرحلة 1).
 
 ### الخطوة 0.3 — تعديل AndroidManifest.xml
 افتح الملف:
