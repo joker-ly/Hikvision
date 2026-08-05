@@ -171,10 +171,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _pinController,
-                  keyboardType: TextInputType.number,
+                  // لوحة نصية: الموظف يدخل أرقامًا والمدير كلمة مرور فيها حروف
+                  keyboardType: TextInputType.visiblePassword,
                   obscureText: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   decoration: const InputDecoration(
-                    labelText: 'الرقم السري',
+                    labelText: 'الرقم السري أو كلمة المرور',
                     prefixIcon: Icon(Icons.password),
                   ),
                   onSubmitted: (_) => _login(),
