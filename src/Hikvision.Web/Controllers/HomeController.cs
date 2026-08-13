@@ -74,6 +74,18 @@ public class HomeController : Controller
             .Select(r => r.EmployeeId)
             .Distinct().ToListAsync()).ToHashSet();
 
+        // آخر بصمة جهاز لأعضاء المجموعات المعفاة (لتقريرهم المستقل)
+        var exemptIds = employees
+            .Where(e => e.Group?.IsFingerprintExempt == true)
+            .Select(e => e.Id).ToList();
+        var lastDeviceRecord = exemptIds.Count == 0
+            ? new Dictionary<int, DateTime>()
+            : await _db.AttendanceRecords
+                .Where(r => exemptIds.Contains(r.EmployeeId) && r.Source == AttendanceSource.Device)
+                .GroupBy(r => r.EmployeeId)
+                .Select(g => new { EmployeeId = g.Key, Last = g.Max(x => x.EventTime) })
+                .ToDictionaryAsync(x => x.EmployeeId, x => x.Last);
+
         foreach (var e in employees.OrderBy(e => e.FullName))
         {
             var groupName = e.Group?.Name ?? "—";
@@ -83,6 +95,17 @@ public class HomeController : Controller
             // موظف معفى (انتهت خدمته): لا يُحتسب بعد تاريخ الإعفاء — يُستبعد من قوائم اليوم
             if (e.ExemptionDate is { } exDate && DateOnly.FromDateTime(today) > exDate)
                 continue;
+
+            // عضو مجموعة معفاة من البصمة: يُحتسب حاضرًا تلقائيًا، فلا يدخل قوائم الغياب
+            // ويُدرَج في تقريره المستقل مع آخر بصمة فعلية له إن وُجدت.
+            if (e.Group?.IsFingerprintExempt == true)
+            {
+                var detail = lastDeviceRecord.TryGetValue(e.Id, out var lastAt)
+                    ? $"آخر بصمة فعلية {lastAt:yyyy-MM-dd}"
+                    : "لا توجد بصمات على الجهاز";
+                vm.ExemptEmployees.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, detail));
+                continue;
+            }
 
             if (deviceByEmp.TryGetValue(e.Id, out var recs) && recs.Count > 0)
             {
@@ -122,6 +145,13 @@ public class HomeController : Controller
             if (!recentIds15.Contains(e.Id))
                 vm.NoRecord15Days.Add(new DashboardEmpRow(e.Id, e.FullName, groupName, "لا سجل خلال 15 يومًا"));
         }
+
+        // ملخص المجموعات المعفاة من البصمة
+        vm.ExemptGroups = vm.ExemptEmployees
+            .GroupBy(r => r.GroupName)
+            .Select(g => new ExemptGroupRow(g.Key, g.Count()))
+            .OrderBy(g => g.GroupName)
+            .ToList();
 
         return View(vm);
     }

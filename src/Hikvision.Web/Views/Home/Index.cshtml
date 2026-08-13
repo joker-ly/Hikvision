@@ -54,6 +54,17 @@
     @{ StatCard("المتأخرون اليوم", Model.LateToday.Count, "bg-soft-warning", "bi-alarm"); }
 </div>
 
+@if (Model.ExemptEmployees.Count > 0)
+{
+    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+        <i class="bi bi-info-circle"></i>
+        <span class="small">
+            قوائم الغياب أدناه (اليوم و15 و30 يومًا) <strong>تستثني @Model.ExemptEmployees.Count موظفًا</strong>
+            من المجموعات المعفاة من البصمة لأنهم يُحتسبون حاضرين تلقائيًا — تجدهم في تقريرهم المستقل بالأسفل.
+        </span>
+    </div>
+}
+
 <div class="row">
     <div class="col-lg-6">@{ RenderCard("الحاضرون اليوم", "success", "bi-check2-circle", Model.PresentToday); }</div>
     <div class="col-lg-6">@{ RenderCard("المتغيبون اليوم", "danger", "bi-x-circle", Model.AbsentToday); }</div>
@@ -61,6 +72,48 @@
     <div class="col-lg-6">@{ RenderCard("ما زالوا بالداخل (دخول دون خروج)", "info", "bi-door-open", Model.StillInside); }</div>
     <div class="col-lg-6">@{ RenderCard("الغائبون منذ 15 يومًا (بلا أي سجل)", "warning", "bi-person-dash", Model.NoRecord15Days); }</div>
     <div class="col-lg-6">@{ RenderCard("الغائبون منذ 30 يومًا (بلا أي سجل)", "secondary", "bi-person-dash", Model.NoRecord30Days); }</div>
+</div>
+
+@* ===== تقرير المجموعات المعفاة من البصمة ===== *@
+<div class="card table-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-shield-check text-primary"></i> المجموعات المعفاة من البصمة</span>
+        <span class="badge bg-primary">@Model.ExemptEmployees.Count</span>
+    </div>
+    @if (Model.ExemptEmployees.Count == 0)
+    {
+        <div class="card-body text-muted small">لا توجد مجموعات معفاة من البصمة.</div>
+    }
+    else
+    {
+        <div class="card-body pb-2">
+            <p class="text-muted small mb-2">
+                هؤلاء يُحتسبون حاضرين تلقائيًا في التقارير والمرتبات ولا يُتوقع لهم سجل بصمة،
+                لذلك استُثنوا من قوائم الغياب أعلاه.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var g in Model.ExemptGroups)
+                {
+                    <span class="badge bg-soft-primary">@g.GroupName: @g.EmployeeCount</span>
+                }
+            </div>
+        </div>
+        <div class="table-responsive" style="max-height:340px;overflow:auto">
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>الموظف</th><th>المجموعة</th><th>آخر بصمة فعلية</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model.ExemptEmployees)
+                    {
+                        <tr>
+                            <td>@r.Name</td>
+                            <td>@r.GroupName</td>
+                            <td class="text-muted small">@r.Detail</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
 <div class="card">
