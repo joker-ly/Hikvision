@@ -218,26 +218,53 @@
 
 @* ===== الحضور اليومي ===== *@
 <div class="card table-card mb-4" style="max-width:900px;">
-    <div class="card-header"><i class="bi bi-calendar3"></i> الحضور اليومي <small class="text-muted">— الحاضرون من واقع البصمة (بدون المعفيين)</small></div>
+    <div class="card-header">
+        <i class="bi bi-calendar3"></i> الحضور اليومي
+        <small class="text-muted">— من واقع البصمة الفعلية، والنسبة من المطالبين بالدوام فقط</small>
+    </div>
+    <div class="card-body pb-0">
+        <p class="small text-muted mb-2">
+            أيام العطل (الأسبوعية والرسمية) لا يُحتسب فيها حضور ولا غياب — يظهر فيها فقط من
+            داوم استثنائيًا. أما احتساب العطلة يومًا مدفوعًا فهو شأن تقرير المرتبات لا الحضور الفعلي.
+        </p>
+    </div>
     <div class="table-responsive" style="max-height:420px;overflow:auto">
         <table class="table table-sm table-hover mb-0">
             <thead>
                 <tr>
-                    <th>التاريخ</th><th>اليوم</th><th>حاضرون</th><th>غائبون</th>
-                    <th>متأخرون</th><th>معفيون</th><th>نسبة الحضور %</th>
+                    <th>التاريخ</th><th>اليوم</th><th>الحالة</th><th>مطالبون</th>
+                    <th>حاضرون</th><th>غائبون</th><th>متأخرون</th>
+                    <th>دوام في عطلة</th><th>معفيون</th><th>نسبة الحضور %</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var d in Model.Daily)
                 {
-                    <tr class="@(d.IsHoliday ? "table-info" : null)">
-                        <td>@d.Date.ToString("yyyy-MM-dd") @(d.IsHoliday ? "🎉" : "")</td>
+                    var isOff = d.IsHoliday || d.IsOffForAll;
+                    <tr class="@(isOff ? "table-secondary" : null)">
+                        <td>@d.Date.ToString("yyyy-MM-dd")</td>
                         <td>@d.DayName</td>
-                        <td>@d.Present</td>
-                        <td>@d.Absent</td>
-                        <td>@d.Late</td>
+                        <td>
+                            @if (d.IsHoliday)
+                            {
+                                <span class="badge bg-soft-info">عطلة رسمية</span>
+                            }
+                            else if (d.IsOffForAll)
+                            {
+                                <span class="badge bg-soft-secondary">عطلة أسبوعية</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-soft-success">عمل</span>
+                            }
+                        </td>
+                        <td>@(d.Required > 0 ? d.Required.ToString() : "—")</td>
+                        <td>@(d.Required > 0 ? d.Present.ToString() : "—")</td>
+                        <td>@(d.Required > 0 ? d.Absent.ToString() : "—")</td>
+                        <td>@(d.Required > 0 ? d.Late.ToString() : "—")</td>
+                        <td>@(d.PresentOnOff > 0 ? d.PresentOnOff.ToString() : "—")</td>
                         <td>@d.Exempt</td>
-                        <td>@d.PresenceRate</td>
+                        <td>@(d.Required > 0 ? $"{d.PresenceRate}" : "—")</td>
                     </tr>
                 }
             </tbody>
@@ -252,7 +279,12 @@
             const ink = '#334155', grid = 'rgba(0,0,0,.06)', blue = '#2563eb';
 
             // نسبة الحضور اليومي — خط زمني (سلسلة واحدة، بلا وسيلة إيضاح)
-            const daily = @Json.Serialize(Model.Daily.Select(d => new { date = d.Date.ToString("MM-dd"), rate = d.PresenceRate }));
+            // أيام العطل تُرسل بقيمة null فتظهر فجوة في الخط بدل هبوط وهمي إلى صفر
+            const daily = @Json.Serialize(Model.Daily.Select(d => new
+            {
+                date = d.Date.ToString("MM-dd"),
+                rate = d.Required > 0 ? (decimal?)d.PresenceRate : null
+            }));
             new Chart(document.getElementById('dailyChart'), {
                 type: 'line',
                 data: {

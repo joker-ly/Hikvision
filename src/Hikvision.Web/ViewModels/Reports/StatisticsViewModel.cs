@@ -60,15 +60,34 @@ public class DailyStatsRow
     public DateOnly Date { get; set; }
     public string DayName { get; set; } = string.Empty;
     public bool IsHoliday { get; set; }
-    /// <summary>الحاضرون من واقع الاحتساب الفعلي (بدون المعفيين من البصمة).</summary>
+
+    /// <summary>الحاضرون فعليًا ممّن هذا اليوم يوم عمل لهم (بلا معفيين ولا من في عطلة).</summary>
     public int Present { get; set; }
+
+    /// <summary>الغائبون ممّن هذا اليوم يوم عمل لهم.</summary>
     public int Absent { get; set; }
+
     public int Late { get; set; }
+
     /// <summary>أعضاء المجموعات المعفاة من البصمة (يُجمعون هنا ولا يدخلون الحاضرين).</summary>
     public int Exempt { get; set; }
-    /// <summary>عدد الموظفين المحسوبين في هذا اليوم (يشمل المعفيين).</summary>
+
+    /// <summary>من هذا اليوم عطلة لهم (عطلة أسبوعية أو رسمية) — لا يُحتسبون حضورًا ولا غيابًا.</summary>
+    public int OffDay { get; set; }
+
+    /// <summary>من بصم فعليًا رغم أن اليوم عطلة له (دوام استثنائي).</summary>
+    public int PresentOnOff { get; set; }
+
+    /// <summary>عدد الموظفين المحسوبين في هذا اليوم (يشمل المعفيين ومن في عطلة).</summary>
     public int Counted { get; set; }
-    /// <summary>النسبة من غير المعفيين: حاضرون ÷ (المحسوبون − المعفيون).</summary>
+
+    /// <summary>عدد المطالبين بالدوام هذا اليوم = حاضرون + غائبون.</summary>
+    public int Required => Present + Absent;
+
+    /// <summary>يوم عطلة للجميع (لا أحد مطالب بالدوام فيه).</summary>
+    public bool IsOffForAll => Required == 0 && OffDay > 0;
+
+    /// <summary>النسبة من المطالبين بالدوام فقط: حاضرون ÷ (حاضرون + غائبون).</summary>
     public decimal PresenceRate { get; set; }
 }
 

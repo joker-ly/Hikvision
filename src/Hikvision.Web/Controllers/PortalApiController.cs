@@ -405,9 +405,14 @@ public class PortalApiController : ControllerBase
                 date = dd.Date.ToString("yyyy-MM-dd"),
                 dd.DayName,
                 dd.IsHoliday,
+                // يوم عطلة للجميع: لا حضور ولا غياب ولا نسبة
+                isOff = dd.IsHoliday || dd.IsOffForAll,
+                dd.Required,
                 dd.Present,
                 dd.Absent,
                 dd.Late,
+                dd.PresentOnOff,
+                dd.OffDay,
                 dd.Exempt,
                 dd.PresenceRate
             })

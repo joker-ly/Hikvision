@@ -89,6 +89,12 @@ public class StatisticsReportService : IStatisticsReportService
             };
             stats.Employees.Add(row);
 
+            // تواريخ البصمات الفعلية على الجهاز (لرصد الدوام الاستثنائي في أيام العطل)
+            var punchDates = records
+                .Where(r => r.Source == AttendanceSource.Device)
+                .Select(r => DateOnly.FromDateTime(r.EventTime))
+                .ToHashSet();
+
             foreach (var d in days)
             {
                 var agg = daily[d.Date];
@@ -99,15 +105,25 @@ public class StatisticsReportService : IStatisticsReportService
                     agg.Exempt++;
                     continue;
                 }
+
+                // يوم عطلة له (أسبوعية أو رسمية): لا يُحتسب حضورًا ولا غيابًا في الجدول
+                // اليومي — لأن احتسابه حضورًا مدفوعًا شأن المرتبات لا الحضور الفعلي.
+                if (!d.IsWorkingDay || d.IsHoliday)
+                {
+                    agg.OffDay++;
+                    if (punchDates.Contains(d.Date)) agg.PresentOnOff++;
+                    continue;
+                }
+
                 if (d.IsPresent) agg.Present++;
                 else agg.Absent++;
                 if (d.IsLate) agg.Late++;
             }
         }
 
-        // النسبة من غير المعفيين: الحاضرون الفعليون ÷ (المحسوبون − المعفيون)
+        // النسبة من المطالبين بالدوام فقط (بلا معفيين ولا من في عطلة)
         foreach (var d in daily.Values)
-            d.PresenceRate = Rate(d.Present, d.Counted - d.Exempt);
+            d.PresenceRate = Rate(d.Present, d.Required);
         stats.Daily = daily.Values.OrderBy(d => d.Date).ToList();
 
         stats.Groups = stats.Employees
@@ -232,19 +248,23 @@ public class StatisticsReportService : IStatisticsReportService
         // ورقة 2: الحضور اليومي
         var wsD = wb.Worksheets.Add("الحضور اليومي");
         wsD.RightToLeft = true;
-        WriteHeaders(wsD, new[] { "التاريخ", "اليوم", "عطلة رسمية", "حاضرون (بصمة)", "غائبون", "متأخرون", "معفيون", "المحسوبون", "نسبة الحضور %" });
+        WriteHeaders(wsD, new[] { "التاريخ", "اليوم", "الحالة", "المطالبون بالدوام", "حاضرون", "غائبون",
+            "متأخرون", "دوام في عطلة", "في عطلة", "معفيون", "نسبة الحضور %" });
         row = 2;
         foreach (var d in stats.Daily)
         {
             wsD.Cell(row, 1).Value = d.Date.ToString("yyyy-MM-dd");
             wsD.Cell(row, 2).Value = d.DayName;
-            wsD.Cell(row, 3).Value = d.IsHoliday ? "نعم" : "";
-            wsD.Cell(row, 4).Value = d.Present;
-            wsD.Cell(row, 5).Value = d.Absent;
-            wsD.Cell(row, 6).Value = d.Late;
-            wsD.Cell(row, 7).Value = d.Exempt;
-            wsD.Cell(row, 8).Value = d.Counted;
-            wsD.Cell(row, 9).Value = d.PresenceRate;
+            wsD.Cell(row, 3).Value = d.IsHoliday ? "عطلة رسمية" : d.IsOffForAll ? "عطلة أسبوعية" : "عمل";
+            wsD.Cell(row, 4).Value = d.Required;
+            wsD.Cell(row, 5).Value = d.Present;
+            wsD.Cell(row, 6).Value = d.Absent;
+            wsD.Cell(row, 7).Value = d.Late;
+            wsD.Cell(row, 8).Value = d.PresentOnOff;
+            wsD.Cell(row, 9).Value = d.OffDay;
+            wsD.Cell(row, 10).Value = d.Exempt;
+            if (d.Required > 0) wsD.Cell(row, 11).Value = d.PresenceRate;
+            else wsD.Cell(row, 11).Value = "—";
             row++;
         }
         wsD.Columns().AdjustToContents();
