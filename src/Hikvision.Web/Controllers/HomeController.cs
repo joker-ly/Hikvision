@@ -74,17 +74,20 @@ public class HomeController : Controller
             .Select(r => r.EmployeeId)
             .Distinct().ToListAsync()).ToHashSet();
 
-        // آخر بصمة جهاز لأعضاء المجموعات المعفاة (لتقريرهم المستقل)
+        // آخر بصمة جهاز لأعضاء المجموعات المعفاة (لتقريرهم المستقل).
+        // استعلام مستقل لكل موظف معفى: بحث فهرسي سريع على (EmployeeId, EventTime)
+        // وعددهم محدود، وأأمن من تجميع على كامل جدول السجلات.
         var exemptIds = employees
             .Where(e => e.Group?.IsFingerprintExempt == true)
             .Select(e => e.Id).ToList();
-        var lastDeviceRecord = exemptIds.Count == 0
-            ? new Dictionary<int, DateTime>()
-            : await _db.AttendanceRecords
-                .Where(r => exemptIds.Contains(r.EmployeeId) && r.Source == AttendanceSource.Device)
-                .GroupBy(r => r.EmployeeId)
-                .Select(g => new { EmployeeId = g.Key, Last = g.Max(x => x.EventTime) })
-                .ToDictionaryAsync(x => x.EmployeeId, x => x.Last);
+        var lastDeviceRecord = new Dictionary<int, DateTime>();
+        foreach (var id in exemptIds)
+        {
+            var last = await _db.AttendanceRecords
+                .Where(r => r.EmployeeId == id && r.Source == AttendanceSource.Device)
+                .MaxAsync(r => (DateTime?)r.EventTime);
+            if (last.HasValue) lastDeviceRecord[id] = last.Value;
+        }
 
         foreach (var e in employees.OrderBy(e => e.FullName))
         {
